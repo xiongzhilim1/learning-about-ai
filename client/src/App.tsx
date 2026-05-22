@@ -1,8 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import SiteLanding from "@/pages/SiteLanding";
-import { Route, Switch } from "wouter";
+import { Redirect, Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import SiteShell from "./layouts/SiteShell";
@@ -16,7 +15,9 @@ function App() {
           <Toaster />
           <SiteShell>
             <Switch>
-              <Route path="/" component={SiteLanding} />
+              <Route path="/">
+                <Redirect to="/ai/prompt-engineering" />
+              </Route>
               <Route path="/ai/*?" component={AiRoutes} />
               <Route component={NotFound} />
             </Switch>
