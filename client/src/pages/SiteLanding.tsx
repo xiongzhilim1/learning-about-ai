@@ -19,7 +19,7 @@ export default function SiteLanding() {
               className="text-4xl md:text-5xl font-bold mb-4"
               style={{ fontFamily: "'Fraunces', serif", color: "#FAF7F2", lineHeight: 1.1 }}
             >
-              Hi, I'm <span style={{ color: "#F5C4A1" }}>Sean</span>
+              Hi, I'm <span style={{ color: "#F5C4A1" }}>Xiong Zhi</span>
             </h1>
             <p
               className="text-lg md:text-xl mb-8"

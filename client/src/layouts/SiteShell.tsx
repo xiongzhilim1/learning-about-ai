@@ -29,13 +29,13 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
               className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold"
               style={{ background: "#2D2A26", color: "#FAF7F2", fontFamily: "'Fraunces', serif" }}
             >
-              S
+              X
             </div>
             <span
               className="text-base font-semibold"
               style={{ fontFamily: "'Fraunces', serif", color: "#2D2A26" }}
             >
-              Sean Lim
+              Xiong Zhi Lim
             </span>
           </Link>
 
@@ -118,11 +118,11 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
                 className="text-sm font-semibold"
                 style={{ fontFamily: "'Fraunces', serif", color: "#2D2A26" }}
               >
-                Sean Lim
+                Xiong Zhi Lim
               </span>
             </div>
             <p className="text-xs" style={{ color: "#6B6560" }}>
-              &copy; {new Date().getFullYear()} Sean Lim
+              &copy; {new Date().getFullYear()} Xiong Zhi Lim
             </p>
           </div>
         </div>
