@@ -7,7 +7,7 @@ Persistent backlog for the project. Checked items stay for history. Organized by
 ## Ship-blocking
 
 - [x] Add per-page `<title>` tags (#3 from audit)
-- [ ] Initial git commit + push to GitHub
+- [x] Initial git commit + push to GitHub
 
 ## High impact, low effort
 
@@ -39,7 +39,7 @@ Persistent backlog for the project. Checked items stay for history. Organized by
 
 ## Infrastructure
 
-- [ ] Deploy to Vercel
+- [x] Deploy to Vercel
 - [ ] Set up custom domain (if desired)
 - [ ] Consider code-splitting — 1MB JS bundle warning from Vite build (was 500KB with 1 section, now 1MB with 3)
 - [ ] Consider localStorage-based module completion tracking (#8 from audit)
