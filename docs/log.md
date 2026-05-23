@@ -4,6 +4,38 @@ Append-only record of actions taken on this project. Most recent first.
 
 ---
 
+## 2026-05-23
+
+### Session 4 — About Me page
+
+**New page + nav + route:**
+- Created `client/src/pages/AboutMe.tsx` — four-section page after iteration: Hero / 01 · Who I am / 02 · How I got here / 03 · What I keep returning to / Let's swap insights (CTA).
+- Added `/about` route in `App.tsx`.
+- Added "About" link to `SiteShell.tsx` desktop + mobile nav with `isAbout` location check, matching existing terracotta active-state styling.
+- Fixed pre-existing wouter base-concatenation bug in `sections/ai/routes.tsx` — the inner `<Router base="/ai">` was prepending `/ai` to its redirect target, causing `/ai` to redirect to `/ai/ai/prompt-engineering`. Latent before; exposed when the new nav let users click "AI Education" from `/about`.
+
+**Editorial design:**
+- Each content section gets a small caps numbered eyebrow ("01 · WHO I AM"), a lucide icon in a tinted square (Anchor / Route / Flame), and a larger lead paragraph for magazine-style hierarchy.
+- Formation section sits on dark `#2D2A26` with sage `#7B9E87` accents (icon, eyebrow, principle headers in peach `#F5C4A1`).
+- Thesis is a left-bordered pull-quote in the Who I am section, with a separate "Where I'm leaning, for now:" stake line underneath.
+
+**Voice rules (per user feedback, iterated through session):**
+- Zero em-dashes anywhere on the page (user reads them as AI tell).
+- Zero ellipses (user reads them as weak/uncertain).
+- Long flowing comma-rich sentences over chopped staccato. Match user's LinkedIn synthesis cadence, not produced essay cadence.
+- Voice intentionally avoids concrete numbers, shipped projects, or named moments/people — identity-first, CV proof lives on the LinkedIn link. Saved as `feedback_personal_writing_no_facts` memory.
+
+**Content sources:**
+- User-pasted LinkedIn synthesis + age-19 Air Force opener + thesis HMW.
+- `~/Downloads/Resume_Lim Xiong Zhi_CA260428.pdf` for journey beats.
+- `~/formation_brain/wiki/` (index, beauty, productive-tension, beholding, purpose, work-theology, intentional-living) for the formation voice — content paraphrased into user's register, credited inline via a link to Karpathy's LLM Wiki gist.
+
+**Critical-lens audit applied** (Shreyas Doshi / Tim Keller / tech leaders) — landed: thesis ends with `?`, "I love life" paragraph closes on "That is what makes a small life beautiful", 2 Corinthians 3:18 + Shreyas credit added to "Transformation follows attention", "watching" → "building toward" in agentic-economy line, added spike sentence on second-brains ("only feels alive when it has opinions"), added "Where I'm leaning, for now:" stake under thesis, removed duplicate "I'm a Christian" from work-as-co-creation, cut "That, honestly, is part of why this site exists" from Beauty principle.
+
+**Verified** in browser at 1280×900 and 390×844, multiple iterations through the session. Type check clean.
+
+---
+
 ## 2026-05-21
 
 ### Session 3 — Context Engineering + Harness Engineering integration

@@ -8,6 +8,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActiveDomain = (slug: string) => location.startsWith(`/${slug}`);
+  const isAbout = location === "/about";
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#F5F0E8" }}>
@@ -58,6 +59,17 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+            <Link
+              href="/about"
+              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 no-underline"
+              style={{
+                fontFamily: "'Source Sans 3', sans-serif",
+                background: isAbout ? "rgba(199,91,57,0.08)" : "transparent",
+                color: isAbout ? "#C75B39" : "#4A453E",
+              }}
+            >
+              About
+            </Link>
           </nav>
 
           {/* Mobile Toggle */}
@@ -92,6 +104,18 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 );
               })}
+              <Link
+                href="/about"
+                className="px-3 py-2.5 rounded-lg text-sm font-medium no-underline"
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  fontFamily: "'Source Sans 3', sans-serif",
+                  background: isAbout ? "rgba(199,91,57,0.08)" : "transparent",
+                  color: isAbout ? "#C75B39" : "#4A453E",
+                }}
+              >
+                About
+              </Link>
             </nav>
           </div>
         )}
