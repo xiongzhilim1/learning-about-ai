@@ -11,7 +11,7 @@ export default function AiRoutes() {
       <SectionLayout domainSlug="ai">
         <Switch>
           <Route path="/">
-            <Redirect to="/ai/prompt-engineering" />
+            <Redirect to="/prompt-engineering" />
           </Route>
           <Route path="/prompt-engineering/*?" component={PromptEngineeringRoutes} />
           <Route path="/context-engineering/*?" component={ContextEngineeringRoutes} />

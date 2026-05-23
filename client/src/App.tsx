@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import AboutMe from "@/pages/AboutMe";
 import NotFound from "@/pages/NotFound";
 import { Redirect, Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -18,6 +19,7 @@ function App() {
               <Route path="/">
                 <Redirect to="/ai/prompt-engineering" />
               </Route>
+              <Route path="/about" component={AboutMe} />
               <Route path="/ai/*?" component={AiRoutes} />
               <Route component={NotFound} />
             </Switch>
