@@ -243,6 +243,249 @@ the arc for a day?`,
   },
 ];
 
+export interface TransitionStage {
+  id: string;
+  number: string;
+  name: string;
+  attribution: string;
+  oneLiner: string;
+  strength: string;
+  weakness: string;
+}
+
+export const transitions: TransitionStage[] = [
+  {
+    id: "para",
+    number: "01",
+    name: "Pure PARA",
+    attribution: "Tiago Forte",
+    oneLiner:
+      "Four folders. Projects, Areas, Resources, Archives. Files live where they are most actionable.",
+    strength: "Immediately intuitive. Zero learning curve for anyone who has used folders.",
+    weakness:
+      "No knowledge layer. Resources becomes a junk drawer in six months. Insights die in the archive.",
+  },
+  {
+    id: "wiki",
+    number: "02",
+    name: "LLM Wiki",
+    attribution: "Andrej Karpathy",
+    oneLiner:
+      "A semantic graph of concepts and entities, interlinked with double brackets. The agent maintains it.",
+    strength:
+      "Every conceptual addition is a permanent brick. Excellent for compounding pure knowledge.",
+    weakness:
+      "No operational layer. The wiki knows what is true but never knows when to act.",
+  },
+  {
+    id: "hybrid",
+    number: "03",
+    name: "Hybrid PARA + Wiki",
+    attribution: "the canonical individual choice",
+    oneLiner:
+      "PARA and wiki live in one directory. Active work cross-pollinates with long-term knowledge.",
+    strength:
+      "Best fit for an interdisciplinary individual. No routing tax. Cross-domain links happen by default.",
+    weakness:
+      "A single folder structure begins to leak between teams once distinct vocabularies emerge.",
+  },
+  {
+    id: "multibrain",
+    number: "04",
+    name: "Multi-brain",
+    attribution: "Thalamic Router model",
+    oneLiner:
+      "Accumulation brains hold deep domain knowledge. An orchestration brain runs PARA and queries them read-only.",
+    strength:
+      "Each brain stays sovereign. Boundaries reflect real communication boundaries. Scales past the fifteen-person threshold.",
+    weakness:
+      "Every input pays a routing tax. The most interesting intersections need a synthesis layer to land anywhere at all.",
+  },
+];
+
+export const transitionsCaption =
+  "Fig 1. The four canonical shapes of personal knowledge architecture. Most individuals stop at Hybrid. The move to multi-brain is a boundary call, not a scale call.";
+
+export interface FractalLayer {
+  id: string;
+  number: string;
+  name: string;
+  purpose: string;
+  inheritsFrom: string;
+  writers: string;
+  readers: string;
+  card: string;
+}
+
+export const fractalLayers: FractalLayer[] = [
+  {
+    id: "cortex",
+    number: "L0",
+    name: "Cortex",
+    purpose: "Company-wide source of truth",
+    inheritsFrom: "nothing",
+    writers: "executive team, legal, strategy",
+    readers: "everyone, automatically",
+    card:
+      "The cortex holds identity, mission, governance, and global strategy. Every other brain inherits from it. This is the organisational equivalent of the neocortex's global workspace, the shared context that travels with every downstream session.",
+  },
+  {
+    id: "product",
+    number: "L1",
+    name: "Product line",
+    purpose: "Deep domain knowledge for one product",
+    inheritsFrom: "cortex",
+    writers: "product managers, engineers, designers",
+    readers: "everyone working on that product",
+    card:
+      "Product line brains hold architecture decisions, feature roadmaps, customer feedback, and engineering best practice. They are the cortical modules. One product line, one canonical place to look.",
+  },
+  {
+    id: "region",
+    number: "L2",
+    name: "Region",
+    purpose: "Local context that varies by geography",
+    inheritsFrom: "cortex",
+    writers: "regional leads, local compliance, regional sales",
+    readers: "anyone operating in that region",
+    card:
+      "Regional brains hold compliance, market dynamics, partnerships, and communication norms specific to a geography. The data residency rules for Singapore do not belong in the global cortex. They belong here.",
+  },
+  {
+    id: "intersection",
+    number: "L3",
+    name: "Intersection",
+    purpose: "Dual inheritance, product times region",
+    inheritsFrom: "product line and region",
+    writers: "the cross-functional team itself",
+    readers: "the team plus both parent brains",
+    card:
+      "Where the fractal gets interesting. Analytics in APAC needs both the product depth and the regional context. This brain inherits from both parents and adds its own client work, case studies, and localisation.",
+  },
+  {
+    id: "individual",
+    number: "L4",
+    name: "Individual",
+    purpose: "Personal working memory",
+    inheritsFrom: "the team brain",
+    writers: "the individual",
+    readers: "the individual, private by default",
+    card:
+      "Each contributor's own hippocampus. Meeting notes, draft thinking, personal learnings, career goals. Fast capture that eventually consolidates upward into the team and product wikis through weekly review.",
+  },
+];
+
+export const fractalCaption =
+  "Fig 2. Five fractal layers. Each layer has the same internal shape, raw plus wiki plus sessions. Each one inherits from its parent and specialises. Subsidiarity for memory at scale.";
+
+export const furtherReading = [
+  {
+    heading: "The arc that shaped the page",
+    items: [
+      {
+        text: "digital-brain-toolkit-public",
+        href: "https://github.com/xiongzhilim1/digital-brain-toolkit-public",
+        tail: "The repo this page walks through.",
+      },
+      {
+        text: "Series 01, the digital brain",
+        href: "https://www.linkedin.com/in/limxiongzhi/",
+        tail: "Ten posts that fed the prose.",
+      },
+    ],
+  },
+  {
+    heading: "The shape of the system",
+    items: [
+      {
+        text: "Andrej Karpathy, LLM Wiki",
+        href: "https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f",
+        tail: "The sketch the wiki brains lean on.",
+      },
+      {
+        text: "Tiago Forte, Introducing the AI Second Brain",
+        href: "https://fortelabs.com/blog/introducing-the-ai-second-brain/",
+        tail: "PARA, and the move from PKM to context management.",
+      },
+      {
+        text: "Michael Simmons, the Three Brains framework",
+        href: "https://blog.michaelsimmons.com/p/the-third-brain-revolution",
+        tail: "Where the orchestration framing comes from.",
+      },
+      {
+        text: "Christopher Allen, Wikilinks and Named Edges",
+        href: "https://gist.github.com/ChristopherA/151aefa6a6bde1ce4fa6b1182656cebe",
+        tail: "Typed edges in a markdown brain.",
+      },
+      {
+        text: "Rumproarious, Your file system is already a graph database",
+        href: "https://rumproarious.com/2026/04/04/your-file-system-is-already-a-graph-database/",
+        tail: "Why a folder of markdown is a knowledge graph.",
+      },
+    ],
+  },
+  {
+    heading: "The neuroscience underneath",
+    items: [
+      {
+        text: "Squire et al., Memory consolidation",
+        href: "https://pmc.ncbi.nlm.nih.gov/articles/PMC4526749/",
+        tail: "Hippocampus to neocortex. The blueprint for raw to wiki.",
+      },
+      {
+        text: "Sweller, Cognitive load theory",
+        href: "https://www.sciencedirect.com/topics/social-sciences/cognitive-load-theory",
+        tail: "Why the always-loaded surface has to stay small.",
+      },
+      {
+        text: "Shofty et al., Default mode network",
+        href: "https://pmc.ncbi.nlm.nih.gov/articles/PMC9613551/",
+        tail: "The white space that offloading buys back.",
+      },
+      {
+        text: "Fitts and Posner, three stages of skill",
+        href: "https://pmc.ncbi.nlm.nih.gov/articles/PMC8048153/",
+        tail: "Cognitive, associative, autonomous. The shape of playbook maturity.",
+      },
+    ],
+  },
+  {
+    heading: "The topology at scale",
+    items: [
+      {
+        text: "Martin Fowler, Conway's Law",
+        href: "https://martinfowler.com/bliki/ConwaysLaw.html",
+        tail: "Why brain boundaries should map to communication boundaries.",
+      },
+      {
+        text: "Eric Evans, Domain-driven Design",
+        href: "https://www.domainlanguage.com/",
+        tail: "Bounded contexts. The grammar of where one brain ends and another begins.",
+      },
+      {
+        text: "Robin Dunbar, the social brain",
+        href: "https://journals.sagepub.com/doi/abs/10.1177/0963721413517118",
+        tail: "The fifteen-person sympathy group. One of three independent routes to the same threshold.",
+      },
+      {
+        text: "Fred Brooks, The Mythical Man-Month",
+        href: "https://en.wikipedia.org/wiki/The_Mythical_Man-Month",
+        tail: "Communication paths grow as n(n-1)/2. The arithmetic behind the threshold.",
+      },
+      {
+        text: "Analytics at Meta, progressive disclosure",
+        href: "https://medium.com/@analytics-at-meta",
+        tail: "Loading a lean map first. Drilling only when needed.",
+      },
+      {
+        text: "Dell'Acqua et al., the Jagged Frontier",
+        href: "https://www.hbs.edu/ris/Publication%20Files/24-013_d9b45b68-9e74-42d6-a1c6-c72fb70c7282.pdf",
+        tail: "Centaur and Cyborg. Two valid shapes of human and AI co-work.",
+      },
+    ],
+  },
+];
+
 export const traceSteps = [
   {
     label: "Root",
