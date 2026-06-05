@@ -4,14 +4,16 @@ import SectionEyebrow from "./digital-brain/SectionEyebrow";
 import ConsoleBlock from "./digital-brain/ConsoleBlock";
 import WireDiagram from "./digital-brain/WireDiagram";
 import TraceRow from "./digital-brain/TraceRow";
-import AnnotatedSplit from "./digital-brain/AnnotatedSplit";
 import CtaBand from "./digital-brain/CtaBand";
 import TransitionsDiagram from "./digital-brain/TransitionsDiagram";
-import FractalTopology from "./digital-brain/FractalTopology";
+import TopologyScaler from "./digital-brain/TopologyScaler";
+import ConsoleTabs from "./digital-brain/ConsoleTabs";
+import TurnSelector from "./digital-brain/TurnSelector";
 import {
   brainMdExample,
   consoleBlocks,
   furtherReading,
+  architectureFiles,
 } from "./digital-brain/content";
 
 const REPO_URL = "https://github.com/xiongzhilim1/digital-brain-toolkit-public";
@@ -173,101 +175,52 @@ export default function DigitalBrain() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
               <div>
                 <p
-                  className="text-base md:text-lg mb-5"
+                  className="text-base md:text-lg mb-6"
                   style={{
                     color: "#3A3530",
                     fontFamily: "'Source Sans 3', sans-serif",
                     lineHeight: 1.75,
                   }}
                 >
-                  The first idea is PARA. Every active thing in the brain
-                  is a project, an area, a resource, or an archive. Four
-                  buckets, no more. The second is the brain protocol, a
-                  small spec that lets several brains live next to each
-                  other, each one sovereign in its own directory, each one
-                  read-only to the others.
+                  PARA holds active work. A small protocol holds the
+                  manifests that let several brains live next to each
+                  other, sovereign and read-only. Five files do the
+                  load-bearing work.
                 </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6">
+                  {architectureFiles.map((f) => (
+                    <div
+                      key={f.name}
+                      className="p-3 rounded-md"
+                      style={{
+                        background: "#FDFBF7",
+                        border: "1px solid #E8E0D4",
+                      }}
+                    >
+                      <p
+                        className="text-sm font-semibold mb-1"
+                        style={{
+                          fontFamily: "'Fira Code', monospace",
+                          color: "#C75B39",
+                        }}
+                      >
+                        {f.name}
+                      </p>
+                      <p
+                        className="text-xs"
+                        style={{
+                          color: "#5A5550",
+                          fontFamily: "'Source Sans 3', sans-serif",
+                          lineHeight: 1.55,
+                        }}
+                      >
+                        {f.role}
+                      </p>
+                    </div>
+                  ))}
+                </div>
                 <p
-                  className="text-base md:text-lg mb-5"
-                  style={{
-                    color: "#3A3530",
-                    fontFamily: "'Source Sans 3', sans-serif",
-                    lineHeight: 1.75,
-                  }}
-                >
-                  Five files do the load-bearing work, and naming them is
-                  half the design.
-                </p>
-                <ul
-                  className="space-y-3 text-base md:text-lg"
-                  style={{
-                    color: "#3A3530",
-                    fontFamily: "'Source Sans 3', sans-serif",
-                    lineHeight: 1.7,
-                  }}
-                >
-                  <li>
-                    <code
-                      style={{
-                        fontFamily: "'Fira Code', monospace",
-                        color: "#C75B39",
-                      }}
-                    >
-                      BRAIN.md
-                    </code>{" "}
-                    is the manifest, a few lines of YAML that say what the
-                    brain offers and what it consumes.
-                  </li>
-                  <li>
-                    <code
-                      style={{
-                        fontFamily: "'Fira Code', monospace",
-                        color: "#C75B39",
-                      }}
-                    >
-                      CLAUDE.md
-                    </code>{" "}
-                    is the operating manual, the prose that tells the
-                    agent how to behave inside this brain.
-                  </li>
-                  <li>
-                    <code
-                      style={{
-                        fontFamily: "'Fira Code', monospace",
-                        color: "#C75B39",
-                      }}
-                    >
-                      index.md
-                    </code>{" "}
-                    is the live map, what is currently active.
-                  </li>
-                  <li>
-                    <code
-                      style={{
-                        fontFamily: "'Fira Code', monospace",
-                        color: "#C75B39",
-                      }}
-                    >
-                      log.md
-                    </code>{" "}
-                    is the append-only record of what happened, the audit
-                    trail.
-                  </li>
-                  <li>
-                    <code
-                      style={{
-                        fontFamily: "'Fira Code', monospace",
-                        color: "#C75B39",
-                      }}
-                    >
-                      MEMORY.md
-                    </code>{" "}
-                    is the agent's persistent layer, an index of pointers
-                    to things that matter, capped at one line each.
-                  </li>
-                </ul>
-                <p
-                  className="text-base md:text-lg mt-6"
+                  className="text-base md:text-lg"
                   style={{
                     color: "#3A3530",
                     fontFamily: "'Source Sans 3', sans-serif",
@@ -300,7 +253,7 @@ export default function DigitalBrain() {
               The surface the agent reads.
             </h2>
             <p
-              className="text-base md:text-lg mb-10"
+              className="text-base md:text-lg mb-8"
               style={{
                 color: "#D4CFC8",
                 fontFamily: "'Source Sans 3', sans-serif",
@@ -308,14 +261,9 @@ export default function DigitalBrain() {
               }}
             >
               Three files, in order. The map, the record, the persistent
-              layer. Verbatim from the brain on 2026-06-05, formatted for
-              the page.
+              layer. Verbatim from the brain on 2026-06-05.
             </p>
-            {consoleBlocks.map((block) => (
-              <div key={block.eyebrow} className="mb-2">
-                <ConsoleBlockOnDark {...block} />
-              </div>
-            ))}
+            <ConsoleTabs blocks={consoleBlocks} />
           </div>
         </div>
       </section>
@@ -344,7 +292,7 @@ export default function DigitalBrain() {
               files you do, follows the same rules, and leaves a trail.
               Here is one short session, annotated.
             </p>
-            <AnnotatedSplit />
+            <TurnSelector />
             <p
               className="text-lg md:text-xl mt-16 max-w-3xl"
               style={{
@@ -523,9 +471,9 @@ cat README.md`}
                 lineHeight: 1.7,
               }}
             >
-              Click a layer.
+              The shape varies with the size. Pick a scale.
             </p>
-            <FractalTopology />
+            <TopologyScaler />
           </div>
         </div>
       </section>
@@ -607,56 +555,3 @@ cat README.md`}
   );
 }
 
-function ConsoleBlockOnDark({
-  eyebrow,
-  body,
-  caption,
-}: {
-  eyebrow: string;
-  body: string;
-  caption?: string;
-}) {
-  return (
-    <figure className="mb-10">
-      <p
-        className="text-xs font-semibold mb-2"
-        style={{
-          color: "#F5C4A1",
-          fontFamily: "'Fira Code', monospace",
-          letterSpacing: "0.15em",
-          textTransform: "uppercase",
-        }}
-      >
-        {eyebrow}
-      </p>
-      <pre
-        className="overflow-x-auto rounded-r-md"
-        style={{
-          background: "#1F1D1A",
-          color: "#FAF7F2",
-          borderLeft: "4px solid #C75B39",
-          padding: "1.25rem 1.5rem",
-          fontFamily: "'Fira Code', monospace",
-          fontSize: "0.8125rem",
-          lineHeight: 1.65,
-          margin: 0,
-        }}
-      >
-        <code style={{ fontFamily: "inherit", color: "inherit" }}>{body}</code>
-      </pre>
-      {caption && (
-        <figcaption
-          className="mt-3 text-sm"
-          style={{
-            color: "#A89F94",
-            fontFamily: "'Source Sans 3', sans-serif",
-            lineHeight: 1.65,
-            fontStyle: "italic",
-          }}
-        >
-          {caption}
-        </figcaption>
-      )}
-    </figure>
-  );
-}

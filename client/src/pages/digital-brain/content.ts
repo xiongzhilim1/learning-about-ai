@@ -378,6 +378,190 @@ export const fractalLayers: FractalLayer[] = [
 export const fractalCaption =
   "Fig 2. Five fractal layers. Each layer has the same internal shape, raw plus wiki plus sessions. Each one inherits from its parent and specialises. Subsidiarity for memory at scale.";
 
+export interface TopologyBox {
+  label: string;
+  sublabel?: string;
+  tone: "ink" | "sage" | "peach" | "terracotta";
+  indent?: number;
+}
+
+export interface TopologyConfig {
+  id: string;
+  tab: string;
+  size: string;
+  threshold: string;
+  spine: string;
+  body: string;
+  boxes: TopologyBox[];
+  caption: string;
+}
+
+export const topologyConfigs: TopologyConfig[] = [
+  {
+    id: "solo",
+    tab: "Solo",
+    size: "1 person",
+    threshold: "no boundaries yet",
+    spine: "One brain, hybrid, all of it traversable.",
+    body:
+      "A single hybrid PARA plus wiki directory. Active projects in 1-projects, knowledge in wiki. The agent reads both in the same session. No routing tax, because there is no routing.",
+    boxes: [
+      {
+        label: "your_brain/",
+        sublabel: "PARA + wiki, single directory",
+        tone: "peach",
+      },
+      {
+        label: "1-projects, 2-areas, 3-resources, 4-archive",
+        sublabel: "PARA layer, active work",
+        tone: "sage",
+        indent: 1,
+      },
+      {
+        label: "wiki/",
+        sublabel: "concepts, entities, playbooks",
+        tone: "sage",
+        indent: 1,
+      },
+    ],
+    caption:
+      "Fig 2a. Solo. One brain holds everything. The interdisciplinary individual ships here.",
+  },
+  {
+    id: "small",
+    tab: "Small team",
+    size: "2 to 15 people",
+    threshold: "shared vocabulary, no real boundaries",
+    spine: "One team brain. Everyone reads, a few people write.",
+    body:
+      "Same hybrid shape as solo, but shared. The team writes into a single brain because their work overlaps and their vocabulary is shared. Splitting here introduces silos before the team is ready for them.",
+    boxes: [
+      {
+        label: "team_brain/",
+        sublabel: "shared PARA + wiki",
+        tone: "peach",
+      },
+      {
+        label: "1-projects/",
+        sublabel: "active client work and sprints",
+        tone: "sage",
+        indent: 1,
+      },
+      {
+        label: "wiki/",
+        sublabel: "playbooks, decisions, glossary",
+        tone: "sage",
+        indent: 1,
+      },
+      {
+        label: "people/",
+        sublabel: "individual working memory, private by default",
+        tone: "sage",
+        indent: 1,
+      },
+    ],
+    caption:
+      "Fig 2b. Small team. One brain still works. Save the multi-brain investment for when vocabularies actually diverge.",
+  },
+  {
+    id: "mid",
+    tab: "Mid-size",
+    size: "15 to 100 people",
+    threshold: "departments forming, distinct vocabularies emerging",
+    spine: "Three layers. Cortex, chapters, squads.",
+    body:
+      "The fifteen-person threshold. Communication paths have crossed the inflection point. The brain splits into a cortex (strategy, identity, governance), chapter brains for each domain of practice, and squad brains for active cross-functional teams running PARA.",
+    boxes: [
+      {
+        label: "cortex/",
+        sublabel: "L0 · identity, strategy, governance",
+        tone: "terracotta",
+      },
+      {
+        label: "chapter-engineering/",
+        sublabel: "L1 · domain depth, inherits cortex",
+        tone: "peach",
+        indent: 1,
+      },
+      {
+        label: "chapter-go-to-market/",
+        sublabel: "L1 · domain depth, inherits cortex",
+        tone: "peach",
+        indent: 1,
+      },
+      {
+        label: "squad-platform-q3/",
+        sublabel: "L2 · active sprint, reads from chapters",
+        tone: "sage",
+        indent: 2,
+      },
+      {
+        label: "squad-onboarding-revamp/",
+        sublabel: "L2 · active sprint, reads from chapters",
+        tone: "sage",
+        indent: 2,
+      },
+    ],
+    caption:
+      "Fig 2c. Mid-size. Three layers is usually enough. Resist a fourth until the topology actually demands it.",
+  },
+  {
+    id: "enterprise",
+    tab: "Enterprise",
+    size: "100 plus, multiple regions, products, compliance",
+    threshold: "fractal, dual inheritance, governance-driven",
+    spine: "Five fractal layers. The same shape, all the way down.",
+    body:
+      "Real boundaries everywhere. Product lines, regions, the intersections where they meet, and the individual contributors underneath. Each layer is a brain with the same internal shape. Each one inherits from its parents. The synthesiser at the top can query across without ever flattening the context.",
+    boxes: [
+      {
+        label: "cortex/",
+        sublabel: "L0 · global identity and strategy",
+        tone: "terracotta",
+      },
+      {
+        label: "product-analytics/",
+        sublabel: "L1 · product line",
+        tone: "peach",
+        indent: 1,
+      },
+      {
+        label: "region-apac/",
+        sublabel: "L2 · region, compliance, partners",
+        tone: "peach",
+        indent: 1,
+      },
+      {
+        label: "analytics-apac/",
+        sublabel: "L3 · intersection, dual inheritance",
+        tone: "sage",
+        indent: 2,
+      },
+      {
+        label: "individual/",
+        sublabel: "L4 · personal working memory",
+        tone: "sage",
+        indent: 3,
+      },
+    ],
+    caption:
+      "Fig 2d. Enterprise fractal. Each layer specialises while inheriting context. Subsidiarity all the way down.",
+  },
+];
+
+export interface ArchitectureFile {
+  name: string;
+  role: string;
+}
+
+export const architectureFiles: ArchitectureFile[] = [
+  { name: "BRAIN.md", role: "Manifest. A few lines of YAML, what the brain offers and consumes." },
+  { name: "CLAUDE.md", role: "Operating manual. The prose that tells the agent how to behave." },
+  { name: "index.md", role: "Live map. What is currently active." },
+  { name: "log.md", role: "Append-only record. The audit trail." },
+  { name: "MEMORY.md", role: "Persistent layer. Index of pointers, one line each." },
+];
+
 export const furtherReading = [
   {
     heading: "The arc that shaped the page",
