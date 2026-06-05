@@ -38,10 +38,8 @@ export default function DigitalBrain() {
                 lineHeight: 1.1,
               }}
             >
-              Most people treat their digital tools as storage.{" "}
-              <span style={{ color: "#F5C4A1" }}>
-                I treat mine as a second mind, one I can hand to an agent.
-              </span>
+              I built a brain{" "}
+              <span style={{ color: "#F5C4A1" }}>my agent can read.</span>
             </h1>
             <p
               className="text-lg md:text-xl mb-10"

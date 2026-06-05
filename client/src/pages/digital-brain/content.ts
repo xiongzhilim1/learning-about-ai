@@ -249,8 +249,10 @@ export interface TransitionStage {
   name: string;
   attribution: string;
   oneLiner: string;
-  strength: string;
-  weakness: string;
+  strengthTag: string;
+  strengthFull: string;
+  weaknessTag: string;
+  weaknessFull: string;
 }
 
 export const transitions: TransitionStage[] = [
@@ -261,9 +263,12 @@ export const transitions: TransitionStage[] = [
     attribution: "Tiago Forte",
     oneLiner:
       "Four folders. Projects, Areas, Resources, Archives. Files live where they are most actionable.",
-    strength: "Immediately intuitive. Zero learning curve for anyone who has used folders.",
-    weakness:
-      "No knowledge layer. Resources becomes a junk drawer in six months. Insights die in the archive.",
+    strengthTag: "intuitive folders",
+    strengthFull:
+      "Immediately intuitive. Zero learning curve for anyone who has used folders.",
+    weaknessTag: "no knowledge layer",
+    weaknessFull:
+      "Resources becomes a junk drawer in six months. Insights die in the archive.",
   },
   {
     id: "wiki",
@@ -272,10 +277,12 @@ export const transitions: TransitionStage[] = [
     attribution: "Andrej Karpathy",
     oneLiner:
       "A semantic graph of concepts and entities, interlinked with double brackets. The agent maintains it.",
-    strength:
+    strengthTag: "compounds knowledge",
+    strengthFull:
       "Every conceptual addition is a permanent brick. Excellent for compounding pure knowledge.",
-    weakness:
-      "No operational layer. The wiki knows what is true but never knows when to act.",
+    weaknessTag: "no triggers to act",
+    weaknessFull:
+      "No operational layer. The wiki knows what is true but never when to act on it.",
   },
   {
     id: "hybrid",
@@ -284,9 +291,11 @@ export const transitions: TransitionStage[] = [
     attribution: "the canonical individual choice",
     oneLiner:
       "PARA and wiki live in one directory. Active work cross-pollinates with long-term knowledge.",
-    strength:
-      "Best fit for an interdisciplinary individual. No routing tax. Cross-domain links happen by default.",
-    weakness:
+    strengthTag: "no routing tax",
+    strengthFull:
+      "Best fit for an interdisciplinary individual. Cross-domain links happen by default.",
+    weaknessTag: "leaks past 15 people",
+    weaknessFull:
       "A single folder structure begins to leak between teams once distinct vocabularies emerge.",
   },
   {
@@ -296,10 +305,12 @@ export const transitions: TransitionStage[] = [
     attribution: "Thalamic Router model",
     oneLiner:
       "Accumulation brains hold deep domain knowledge. An orchestration brain runs PARA and queries them read-only.",
-    strength:
-      "Each brain stays sovereign. Boundaries reflect real communication boundaries. Scales past the fifteen-person threshold.",
-    weakness:
-      "Every input pays a routing tax. The most interesting intersections need a synthesis layer to land anywhere at all.",
+    strengthTag: "scales past 15",
+    strengthFull:
+      "Each brain stays sovereign. Boundaries reflect real communication boundaries.",
+    weaknessTag: "routing tax",
+    weaknessFull:
+      "Every input pays a routing decision. Intersections need a synthesis layer to land anywhere.",
   },
 ];
 
