@@ -2,7 +2,28 @@
  * tokens.css — single source of truth for design tokens.
  * Imported by client/src/index.css.
  *
- * Motion tokens (five --dur-*, three --ease-*) land in step 3.
+ * Motion lexicon (Immersive Transformation Spec, Parts 1 + 5):
+ *   Durations — tick 120ms (cursor/hover), micro 240ms (text lines, icons),
+ *   reveal 400ms (component reveals), transition 800ms (sections, camera arcs),
+ *   assembly 1600ms (hero, once per session).
+ *   Easing — editorial (default; reveals, camera moves), instrument
+ *   (reversible bindings; cursor, hover, scrub), mechanical (structural; rare).
+ *   Adding a fourth curve requires written justification in docs/DESIGN_SYSTEM.md.
+ *
+ * Values are mirrored in motion.ts for Framer Motion consumption. Change both.
+ *
  * Canvas-facing color tokens (--canvas-void, --canvas-glow, --canvas-fog)
- * land with the R3F work (step 5+). Spec: Part 5, Immersive Transformation Spec.
+ * land with the R3F work (step 5+).
  */
+
+:root {
+  --dur-tick: 120ms;
+  --dur-micro: 240ms;
+  --dur-reveal: 400ms;
+  --dur-transition: 800ms;
+  --dur-assembly: 1600ms;
+
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-instrument: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-mechanical: cubic-bezier(0.4, 0, 0.6, 1);
+}

@@ -1,0 +1,63 @@
+# Design System — /digital-brain immersive
+
+Code-first design system for the Restrained Cinema direction. Source spec lives in the second brain (`1-projects/personal-site/page-digital-brain-immersive-spec.md`); this file records what shipped.
+
+North star: the brain assembles itself as you read. If a motion doesn't help a reader understand the system, it doesn't ship.
+
+## Tokens
+
+Single source of truth: `design/tokens.css`, imported by `index.css`. Mirrored for Framer Motion in `design/motion.ts`. Change both together.
+
+### Durations
+
+| Token | Value | Use |
+|---|---|---|
+| `--dur-tick` | 120ms | cursor and hover primitives |
+| `--dur-micro` | 240ms | micro-reveals (text lines, icons, chevrons) |
+| `--dur-reveal` | 400ms | component reveals and settles |
+| `--dur-transition` | 800ms | section transitions and camera arcs |
+| `--dur-assembly` | 1600ms | the hero assembly, once per session |
+
+Longer than 1600ms requires justification. Shorter than 120ms is likely invisible.
+
+### Easing
+
+| Token | Curve | Use |
+|---|---|---|
+| `--ease-editorial` | `cubic-bezier(0.22, 1, 0.36, 1)` | the default; reveals, camera moves, section transitions |
+| `--ease-instrument` | `cubic-bezier(0.65, 0, 0.35, 1)` | reversible bindings; cursor follow, hover in/out, scroll scrub |
+| `--ease-mechanical` | `cubic-bezier(0.4, 0, 0.6, 1)` | structural moves; rare |
+
+Adding a fourth curve requires a written justification appended to this file.
+
+## Primitives
+
+| Primitive | Contract |
+|---|---|
+| `Reveal` | `variant="rise" \| "split" \| "uncover"`, optional `delay`. Rise is the default for text blocks; split is for section eyebrows only; uncover is for ConsoleBlock reveals only. `whileInView`, fires once, `-15%` viewport margin. |
+| `Type.*` | `Display, Heading, Subhead, Body, Lede, Eyebrow, Mono, Caption`. Encapsulates font, weight, tracking, leading. No inline font decisions in components. |
+| `SectionShell` | `beat` (0-11) + `tone="cream" \| "ink" \| "translucent-ink"`. Renders the beat as `data-beat` until CanvasDirector lands (step 5), then registers with it. |
+| `Cursor` | Additive 12px cream circle, 120ms lerp. States: idle / link (32px terracotta) / node (48px terracotta stroke + mono label via `data-cursor="node"` + `data-cursor-label`) / text (hidden). Coarse pointer: not rendered. |
+
+## Reduced motion
+
+First-class path, not degradation:
+
+- Every `Reveal` variant collapses to an opacity-only 240ms fade (spec Part 6).
+- `Cursor` drops the lerp and tracks 1:1.
+- Lenis smooth interpolation is disabled; native scroll only.
+- (From step 5+) the canvas collapses to a static SVG frame.
+
+## Rules
+
+1. No inline motion values. Durations, delays, easings, and reveal distances reference `motion.ts` or the CSS custom properties.
+2. No new easing curves without a written justification here.
+3. Only `CanvasDirector` writes to the 3D scene (applies from step 5).
+4. New sections extend the beat registry, not the scene.
+5. Every animated component has a reduced-motion path.
+6. Enforcement is by code review; the repo has no ESLint setup, so rule 1 is checked at review time.
+
+## Decisions
+
+- 2026-07-04: Motion tokens live in `design/tokens.css` and are `@import`ed by `index.css` — reconciles the spec (tokens.css as source of truth) with the session brief (extend index.css). One source, one propagation.
+- 2026-07-04: Reduced-motion reveals implement Part 6's 240ms opacity fade rather than Part 5's static wrapper; Part 6 is the stricter, tested budget.

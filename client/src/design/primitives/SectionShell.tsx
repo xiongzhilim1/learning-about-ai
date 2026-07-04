@@ -1,9 +1,12 @@
 /**
  * SectionShell — standard section container.
- * Provides max-width + vertical padding, the tone-appropriate background,
- * and (from step 5) registers its beat with CanvasDirector.
+ * Provides vertical rhythm, the container max-width, and the
+ * tone-appropriate background. From step 5 it also registers its beat
+ * with CanvasDirector; until then the beat renders as a data attribute
+ * so the registry contract is already in place.
  *
- * Implementation lands in step 3. Spec: Part 5, primitives.
+ * Tones (spec Part 5): cream (default), ink (opaque inverted),
+ * translucent-ink (canvas peeks through at ~85% ink).
  */
 
 import type { ReactNode } from "react";
@@ -14,10 +17,28 @@ export interface SectionShellProps {
   /** Beat index 0-11 per the Part 3 beat sheet. */
   beat: number;
   tone?: SectionTone;
+  className?: string;
   children: ReactNode;
 }
 
-export default function SectionShell({ children }: SectionShellProps) {
-  // Skeleton: renders children statically until step 3.
-  return <section>{children}</section>;
+const toneClasses: Record<SectionTone, string> = {
+  cream: "bg-cream text-ink",
+  ink: "bg-ink text-cream",
+  "translucent-ink": "bg-ink/85 text-cream",
+};
+
+export default function SectionShell({
+  beat,
+  tone = "cream",
+  className,
+  children,
+}: SectionShellProps) {
+  const classes = ["py-24 md:py-32", toneClasses[tone], className]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    <section data-beat={beat} className={classes}>
+      <div className="container">{children}</div>
+    </section>
+  );
 }

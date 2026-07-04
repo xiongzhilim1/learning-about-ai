@@ -1,10 +1,10 @@
 /**
  * Type — composable typography primitives. Encapsulates font-family,
  * weight, tracking, and line-height per role so no component makes
- * inline font decisions.
+ * inline font decisions. Roles mirror the shipped /digital-brain styles.
  *
- * Roles: display, heading, subhead, body, lede, eyebrow, mono, caption.
- * Implementation lands in step 3. Spec: Part 5, primitives.
+ * Fonts come from the theme tokens in index.css (font-heading = Fraunces,
+ * font-body = Source Sans 3, font-mono = Fira Code).
  */
 
 import type { ElementType, ReactNode } from "react";
@@ -26,23 +26,50 @@ export interface TypeProps {
   children: ReactNode;
 }
 
-// Skeleton components: static passthroughs until step 3.
-function make(role: TypeRole, defaultTag: ElementType) {
+const roleClasses: Record<TypeRole, string> = {
+  display:
+    "font-heading font-bold text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.01em]",
+  heading:
+    "font-heading font-bold text-3xl md:text-4xl leading-[1.2] tracking-[-0.01em]",
+  subhead: "font-heading font-semibold text-xl md:text-2xl leading-[1.3]",
+  body: "font-body text-base leading-[1.7]",
+  lede: "font-body text-lg md:text-xl leading-[1.7]",
+  eyebrow:
+    "font-body font-semibold text-xs uppercase tracking-[0.2em]",
+  mono: "font-mono text-[0.8125rem] leading-[1.6]",
+  caption: "font-body text-sm leading-[1.6] text-muted-foreground",
+};
+
+const defaultTags: Record<TypeRole, ElementType> = {
+  display: "h1",
+  heading: "h2",
+  subhead: "h3",
+  body: "p",
+  lede: "p",
+  eyebrow: "p",
+  mono: "code",
+  caption: "span",
+};
+
+function make(role: TypeRole) {
   function TypeComponent({ as, className, children }: TypeProps) {
-    const Tag = as ?? defaultTag;
-    return <Tag className={className}>{children}</Tag>;
+    const Tag = as ?? defaultTags[role];
+    const classes = className
+      ? `${roleClasses[role]} ${className}`
+      : roleClasses[role];
+    return <Tag className={classes}>{children}</Tag>;
   }
   TypeComponent.displayName = `Type.${role}`;
   return TypeComponent;
 }
 
 export const Type = {
-  Display: make("display", "h1"),
-  Heading: make("heading", "h2"),
-  Subhead: make("subhead", "h3"),
-  Body: make("body", "p"),
-  Lede: make("lede", "p"),
-  Eyebrow: make("eyebrow", "span"),
-  Mono: make("mono", "code"),
-  Caption: make("caption", "span"),
+  Display: make("display"),
+  Heading: make("heading"),
+  Subhead: make("subhead"),
+  Body: make("body"),
+  Lede: make("lede"),
+  Eyebrow: make("eyebrow"),
+  Mono: make("mono"),
+  Caption: make("caption"),
 };
