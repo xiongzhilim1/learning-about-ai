@@ -1,0 +1,8 @@
+/*
+ * tokens.css — single source of truth for design tokens.
+ * Imported by client/src/index.css.
+ *
+ * Motion tokens (five --dur-*, three --ease-*) land in step 3.
+ * Canvas-facing color tokens (--canvas-void, --canvas-glow, --canvas-fog)
+ * land with the R3F work (step 5+). Spec: Part 5, Immersive Transformation Spec.
+ */
