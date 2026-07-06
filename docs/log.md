@@ -4,6 +4,24 @@ Append-only record of actions taken on this project. Most recent first.
 
 ---
 
+## 2026-07-05
+
+### Session — Digital Brain immersive, handoff steps 1–4 (plumbing before choreography)
+
+Source spec: second brain, `1-projects/personal-site/page-digital-brain-immersive-spec.md` (Part 8 handoff plan). No R3F work this session by design.
+
+- **Step 1 (`4806360`)**: installed `three`, `@react-three/fiber`, `@react-three/drei`, `@react-three/postprocessing`, `lenis`; `leva` + `@types/three` as devDependencies. Nothing beyond spec Part 2.
+- **Step 2 (`6144ef7`)**: scaffolded `client/src/design/` per spec Part 5 — `tokens.css`, `motion.ts`, `scene/{palette,materials,lighting,cameras}.ts` (typed signatures, implementations land with beat work), `primitives/`, `docs/DESIGN_SYSTEM.md`.
+- **Step 3 (`3ca7d1c`)**: motion tokens (5 `--dur-*`, 3 `--ease-*`) in `tokens.css`, imported by `index.css`, mirrored in `motion.ts`. Built `Reveal` (rise/split/uncover), `Type` (8 roles), `SectionShell` (beat + tone), `Cursor` (idle/link/node/text). Reduced motion is a first-class path in each.
+- **Step 3 completion (`c5c1f72`)**: `/design` living style guide route rendering every primitive from `client/src/design`.
+- **Step 4 (`fd86798`)**: `PageShell` wires Lenis (lerp 0.1, smoothWheel) + Framer Motion `useScroll`, exposes page progress via context for the future CanvasDirector, mounts `Cursor`. Scoped to immersive pages only; Lenis destroyed on unmount so other routes keep native scroll.
+
+**Verification (step 4):** `prefers-reduced-motion` never instantiates Lenis (code path, reacts to live change) — verified. No CLS: PageShell adds no layout DOM; cursor is `position: fixed` — verified. Trackpad scroll feel matches spec config but needs a manual pass on real hardware — **flagged, not claimed**. Build clean; `three` confirmed absent from the bundle (code-split lands at step 5).
+
+**Watch item:** main JS chunk is 337KB gz against the spec's 350KB first-load budget, pre-existing (radix + framer-motion + lucide). Needs attention before the scene chunk lands.
+
+Next: step 5 — `FixedCanvas` + empty `CanvasDirector`, verify chunk-split and no CLS.
+
 ## 2026-05-23
 
 ### Session 4 — About Me page

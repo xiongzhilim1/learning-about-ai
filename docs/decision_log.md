@@ -103,3 +103,17 @@ Format: **Decision** / **Why** / **Alternatives considered** / **Sean's call**
 - **Why**: Workshop design system is light-mode only. Dark mode colors on light background would be invisible or jarring.
 - **Alternatives**: Support dark mode globally (scope creep); convert tenet accent colors to hex (76 occurrences, diminishing returns)
 - **Sean's call**: Pending review
+
+## D-015: Lenis scoped to PageShell, not global
+- **Date**: 2026-07-05
+- **Decision**: Smooth scroll (Lenis) mounts inside `PageShell`, used only by immersive pages (`/digital-brain`, `/design`). Other routes keep native scroll. Lenis is destroyed on PageShell unmount.
+- **Why**: The spec's non-goals ban scroll-jacking site-wide; the AI-education pages have no scroll choreography and gain nothing from interpolated scroll. Scoping also keeps the surgical-changes rule intact.
+- **Alternatives**: Global Lenis in App.tsx (simpler wiring, but touches every page); per-section Lenis (fights the one-continuous-stage principle).
+- **Sean's call**: Pending review — implemented scoped.
+
+## D-016: Motion tokens live in design/tokens.css, imported by index.css
+- **Date**: 2026-07-05
+- **Decision**: The five `--dur-*` and three `--ease-*` properties live in `client/src/design/tokens.css`, `@import`ed by `index.css`, mirrored in `motion.ts`.
+- **Why**: Reconciles the session brief ("extend index.css") with spec Part 5 (tokens.css as single source of truth). One file owns motion; index.css stays the theme entrypoint.
+- **Alternatives**: Inline in index.css `:root` (splits token ownership across two files as scene tokens arrive at step 5+).
+- **Sean's call**: Pending review — recorded in DESIGN_SYSTEM.md as well.
