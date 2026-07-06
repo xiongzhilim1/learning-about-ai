@@ -100,6 +100,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* The site cream, moved here from SiteShell's wrapper div: body's
+       background propagates to the viewport and paints BEHIND the fixed
+       -z-10 canvas, while a wrapper div's background would paint over
+       it. Same #F5F0E8 the wrapper used — zero visual change. */
+    background-color: #F5F0E8;
     font-family: 'Source Sans 3', sans-serif;
     line-height: 1.7;
   }

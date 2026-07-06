@@ -41,7 +41,16 @@ Adding a fourth curve requires a written justification appended to this file.
 | `PageShell` | Scroll pipeline: Lenis (lerp 0.1) + `useScroll` progress via context. `canvas` prop mounts `FixedCanvas`. Immersive pages only; other routes keep native scroll. |
 | `FixedCanvas` | Gate + lazy mount for the 3D stage. Imports nothing from three; `CanvasScene` is the code-split chunk (< 250KB gz), requested after first paint. Gate: reduced motion, no WebGL2, ≤768px viewport, or `deviceMemory < 4` → renders nothing (StaticBrain fallback lands step 8). |
 | `CanvasScene` | The persistent R3F stage. `fixed inset-0 -z-10`, `pointer-events: none`, `aria-hidden`, `frameloop="demand"` — renders only when invalidated, no idle animation (P4). The only module that imports three/fiber. |
-| `CanvasDirector` | The orchestrator. Only writer to the 3D scene (rule 3). Receives page scroll progress; interpolates named camera/lighting states from `scene/*`. Step 5: empty skeleton. |
+| `CanvasDirector` | The orchestrator. Only writer to the 3D scene (rule 3). Receives page scroll progress; interpolates named camera/lighting states from `scene/*`. Step 6: holds Beat 00 rest (canonical camera + prelude rig + BrainMesh), no scroll interpolation yet. |
+| `BrainMesh` | The five-node graph (`scene/BrainMesh.tsx`). Beat 00: flat-shaded icosahedra in parchment, hub-and-spoke faint edges from `second`. Exposes `brainNodes` registry for satellites/beams at later beats. Choreographed only by CanvasDirector. |
+
+## Scene tokens
+
+`scene/palette.ts` resolves CSS custom properties (including the three `--canvas-*` tokens, spec Part 5 verbatim) to hex at module load via a 1x1 2D-canvas parse — three.js cannot read `oklch()`, the browser's `fillStyle` parser can. One source of truth (`tokens.css`), one propagation. `materials.ts`, `lighting.ts`, `cameras.ts` are registries extended per beat (rule 4); Beat 00 ships `parchmentNode`, `faintEdge`, the `prelude` rig, and the `canonical` camera.
+
+## Canvas visibility
+
+The site cream (`#F5F0E8`) is painted on `<body>` (propagates behind the `-z-10` fixed canvas), not on SiteShell's wrapper (which would paint over it). Sections control canvas visibility with their own backgrounds: opaque hides, absent/translucent reveals. All `/digital-brain` sections are currently opaque; windows open with the beat work (step 7+). `/design` has one transparent window section showing the Beat 00 rest.
 
 ## Reduced motion
 

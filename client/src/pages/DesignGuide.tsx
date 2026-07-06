@@ -19,7 +19,7 @@ export default function DesignGuide() {
   useTitle("Design System");
 
   return (
-    <PageShell>
+    <PageShell canvas>
       <SectionShell beat={0}>
         <Type.Eyebrow className="text-terracotta">Design system</Type.Eyebrow>
         <Type.Display as="h1" className="mt-4">
@@ -89,6 +89,21 @@ export default function DesignGuide() {
           </div>
         </div>
       </SectionShell>
+
+      {/* Transparent window: no background, so the fixed canvas behind the
+          page shows through. This is the Beat 00 rest state — the review
+          surface for scene primitives before they ship on /digital-brain. */}
+      <section data-beat={0} className="py-24 md:py-32">
+        <div className="container">
+          <Type.Heading>Scene — Beat 00 rest</Type.Heading>
+          <Type.Caption>
+            Five brains, faint wire, canonical camera, prelude rig. The canvas
+            is behind the page; this section is a transparent window onto it.
+            It should be still: no idle motion, ever.
+          </Type.Caption>
+        </div>
+        <div className="h-[60vh]" aria-hidden />
+      </section>
 
       <SectionShell beat={0}>
         <Type.Heading>Motion tokens</Type.Heading>

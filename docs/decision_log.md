@@ -124,3 +124,24 @@ Format: **Decision** / **Why** / **Alternatives considered** / **Sean's call**
 - **Why**: Spec's rendering topology puts FixedCanvas inside PageShell unconditionally, but /design is a 2D style guide — a GPU context there is pure cost. Post-first-paint loading keeps LCP prose-bound and mobile never requests the chunk.
 - **Alternatives**: Unconditional canvas in PageShell (simpler, wasteful); separate ImmersiveShell component (more API surface for the same choice).
 - **Sean's call**: Pending review — implemented opt-in.
+
+## D-018: Site cream painted on body, not SiteShell's wrapper
+- **Date**: 2026-07-05
+- **Decision**: `#F5F0E8` moved from SiteShell's wrapper div inline style to a `body` rule in index.css. Wrapper is now transparent.
+- **Why**: CSS paint order — a wrapper div's background paints over negative z-index descendants, so the fixed `-z-10` canvas was invisible on every page. Body's background propagates to the viewport and paints behind it. Same color, zero visual change, unblocks the whole canvas architecture.
+- **Alternatives**: Canvas at z-0 with content lifted to z-10 (fights the spec topology; canvas would overlay the footer); per-page wrapper overrides (leaky).
+- **Sean's call**: Pending review.
+
+## D-019: /design is the scene review surface (amends D-017)
+- **Date**: 2026-07-05
+- **Decision**: `/design` now mounts the canvas and shows a transparent "Beat 00 rest" window. D-017 kept /design canvas-free; that held only while the style guide was 2D-only.
+- **Why**: Scene primitives (materials, rigs, camera states) need the same review-against-real-output loop as 2D primitives. /digital-brain sections stay opaque until step 7, so /design is the only place to see the scene.
+- **Alternatives**: Reviewing on /digital-brain directly (requires opening hero windows early, conflating step 6 and 7); a dev-only leva scene route (invisible to design review).
+- **Sean's call**: Pending review.
+
+## D-020: BrainMesh v1 taste assumptions (first pass)
+- **Date**: 2026-07-05
+- **Decision**: (1) Nodes are flat-shaded icosahedra — crafted low-poly, not smooth chrome. (2) Edge topology is hub-and-spoke from `second`: cross-brain reads flow through the working brain, so the wire mirrors PROTOCOL.md rather than an arbitrary mesh. (3) `second` renders slightly larger (0.5 vs 0.42).
+- **Why**: Each choice argues something true about the system; none is decorative. All three are one-line changes if the browser check disagrees.
+- **Alternatives**: Spheres (reads as generic dataviz); full mesh edges (implies peer-to-peer writes, which the protocol forbids); uniform sizes (hides the working brain's role).
+- **Sean's call**: Pending — review at /design.

@@ -11,8 +11,11 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const isAbout = location === "/about";
   const isDigitalBrain = location === "/digital-brain";
 
+  // No background on the wrapper: the site cream lives on <body> (index.css)
+  // so the fixed -z-10 canvas can paint between it and the content. An opaque
+  // background here would hide the canvas on every page.
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#F5F0E8" }}>
+    <div className="min-h-screen flex flex-col">
       {/* Site Header */}
       <header
         className="sticky top-0 z-50 border-b"

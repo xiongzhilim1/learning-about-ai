@@ -6,6 +6,18 @@ Append-only record of actions taken on this project. Most recent first.
 
 ## 2026-07-05
 
+### Session — Digital Brain immersive, step 6 first pass (BrainMesh v1, Beat 00 rest)
+
+- Implemented the scene registries: `palette.ts` (CSS-var → hex bridge via 1x1 2D-canvas parse; three.js can't read oklch), `materials.ts` (`parchmentNode`, `faintEdge`), `lighting.ts` (`prelude` rig, key at the 0.6 photosensitivity ceiling), `cameras.ts` (`canonical` three-quarter state). Added the three `--canvas-*` tokens to `tokens.css` (spec Part 5 values, verbatim).
+- Built `scene/BrainMesh.tsx`: five flat-shaded icosahedra (second at 0.5, satellites 0.42), hub-and-spoke `lineSegments` edges from `second`. Exposes `brainNodes` registry for later beats.
+- `CanvasDirector` now holds the Beat 00 rest: applies canonical camera + prelude rig, renders BrainMesh, invalidates once. No scroll interpolation yet (step 7+).
+- Canvas visibility unblocked: site cream moved from SiteShell's wrapper div to `<body>` (wrapper bg painted OVER the -z-10 canvas; body bg propagates behind it). Same `#F5F0E8`, zero visual change. All 11 `/digital-brain` sections verified opaque — no unplanned bleed-through; windows open at step 7.
+- `/design` gained a transparent "Scene — Beat 00 rest" window section and now mounts the canvas — the style guide is the scene review surface.
+
+**First-pass taste assumptions, awaiting Sean's eye:** icosahedra as the geometry family; hub-and-spoke edge topology (cross-brain reads flow through the working brain, mirroring PROTOCOL.md); second_brain slightly larger. Camera/light values are starting points.
+
+**Verification:** build clean; scene chunk 240.4KB gz (+0.9KB, < 250KB); main chunk unchanged. NOT visually verified — no browser in this session. Per repo rules, not claiming done until reviewed at /design in a browser.
+
 ### Session — Digital Brain immersive, step 5 (FixedCanvas + empty CanvasDirector)
 
 - Built `FixedCanvas` (gate + lazy mount, no three imports), `CanvasScene` (the only three/fiber importer → becomes the code-split chunk; `fixed inset-0 -z-10`, `pointer-events: none`, `aria-hidden`, `frameloop="demand"`), and `CanvasDirector` (empty skeleton, receives scroll progress; sole scene writer per rule 3).

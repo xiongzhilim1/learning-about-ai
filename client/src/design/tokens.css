@@ -12,8 +12,9 @@
  *
  * Values are mirrored in motion.ts for Framer Motion consumption. Change both.
  *
- * Canvas-facing color tokens (--canvas-void, --canvas-glow, --canvas-fog)
- * land with the R3F work (step 5+).
+ * Canvas-facing color tokens (spec Part 5, verbatim): void (deep ink
+ * canvas background), glow (terracotta light emitters), fog (mid-tone
+ * atmospheric). Read by scene/palette.ts via a JS bridge at module load.
  */
 
 :root {
@@ -26,4 +27,8 @@
   --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-instrument: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-mechanical: cubic-bezier(0.4, 0, 0.6, 1);
+
+  --canvas-void: oklch(0.15 0.01 60);
+  --canvas-glow: oklch(0.75 0.16 30 / 0.4);
+  --canvas-fog: oklch(0.55 0.02 60 / 0.6);
 }
