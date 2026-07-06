@@ -117,3 +117,10 @@ Format: **Decision** / **Why** / **Alternatives considered** / **Sean's call**
 - **Why**: Reconciles the session brief ("extend index.css") with spec Part 5 (tokens.css as single source of truth). One file owns motion; index.css stays the theme entrypoint.
 - **Alternatives**: Inline in index.css `:root` (splits token ownership across two files as scene tokens arrive at step 5+).
 - **Sean's call**: Pending review — recorded in DESIGN_SYSTEM.md as well.
+
+## D-017: Canvas is opt-in per page via PageShell prop; chunk loads after first paint
+- **Date**: 2026-07-05
+- **Decision**: `FixedCanvas` mounts only when a page passes `canvas` to `PageShell` (`/digital-brain` yes, `/design` no). The three/R3F code lives in `CanvasScene`, lazy-imported after first paint behind the spec Part 2 gate (reduced motion, WebGL2, viewport, deviceMemory).
+- **Why**: Spec's rendering topology puts FixedCanvas inside PageShell unconditionally, but /design is a 2D style guide — a GPU context there is pure cost. Post-first-paint loading keeps LCP prose-bound and mobile never requests the chunk.
+- **Alternatives**: Unconditional canvas in PageShell (simpler, wasteful); separate ImmersiveShell component (more API surface for the same choice).
+- **Sean's call**: Pending review — implemented opt-in.

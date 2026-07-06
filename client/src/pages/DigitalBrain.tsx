@@ -25,7 +25,7 @@ export default function DigitalBrain() {
   useTitle("A Brain You Can Fork");
 
   return (
-    <PageShell>
+    <PageShell canvas>
       <div>
       {/* § 01 — HERO */}
       <section className="py-24 md:py-32" style={{ background: "#2D2A26" }}>

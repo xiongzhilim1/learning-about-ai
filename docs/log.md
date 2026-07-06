@@ -6,6 +6,18 @@ Append-only record of actions taken on this project. Most recent first.
 
 ## 2026-07-05
 
+### Session — Digital Brain immersive, step 5 (FixedCanvas + empty CanvasDirector)
+
+- Built `FixedCanvas` (gate + lazy mount, no three imports), `CanvasScene` (the only three/fiber importer → becomes the code-split chunk; `fixed inset-0 -z-10`, `pointer-events: none`, `aria-hidden`, `frameloop="demand"`), and `CanvasDirector` (empty skeleton, receives scroll progress; sole scene writer per rule 3).
+- `PageShell` gained a `canvas` prop; enabled on `/digital-brain` only. `/design` stays canvas-free.
+- Fixed `Type.tsx` TS break: R3F v9's JSX augmentation widens `ElementType`, collapsing JSX children inference to `never` for a polymorphic tag. Switched to `createElement`.
+
+**Verification:** scene chunk split confirmed — `CanvasScene` 239.6KB gz (< 250KB budget); main chunk +2.3KB (339.9KB gz, still < 350KB). No CLS: canvas is `position: fixed`, mounts after first paint, no layout DOM. Gate paths (reduced motion / no WebGL2 / ≤768px / low memory) return null.
+
+**Watch items:** empty scene already costs 239.6KB gz — ~10KB headroom before the drei/postprocessing imports at step 6. Both budgets are near ceilings; step 6 must import drei selectively and re-measure.
+
+Next: step 6 — `BrainMesh` v1, Beat 00 material + lighting.
+
 ### Session — Digital Brain immersive, handoff steps 1–4 (plumbing before choreography)
 
 Source spec: second brain, `1-projects/personal-site/page-digital-brain-immersive-spec.md` (Part 8 handoff plan). No R3F work this session by design.

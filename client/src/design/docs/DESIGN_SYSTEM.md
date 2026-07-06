@@ -38,6 +38,10 @@ Adding a fourth curve requires a written justification appended to this file.
 | `Type.*` | `Display, Heading, Subhead, Body, Lede, Eyebrow, Mono, Caption`. Encapsulates font, weight, tracking, leading. No inline font decisions in components. |
 | `SectionShell` | `beat` (0-11) + `tone="cream" \| "ink" \| "translucent-ink"`. Renders the beat as `data-beat` until CanvasDirector lands (step 5), then registers with it. |
 | `Cursor` | Additive 12px cream circle, 120ms lerp. States: idle / link (32px terracotta) / node (48px terracotta stroke + mono label via `data-cursor="node"` + `data-cursor-label`) / text (hidden). Coarse pointer: not rendered. |
+| `PageShell` | Scroll pipeline: Lenis (lerp 0.1) + `useScroll` progress via context. `canvas` prop mounts `FixedCanvas`. Immersive pages only; other routes keep native scroll. |
+| `FixedCanvas` | Gate + lazy mount for the 3D stage. Imports nothing from three; `CanvasScene` is the code-split chunk (< 250KB gz), requested after first paint. Gate: reduced motion, no WebGL2, ≤768px viewport, or `deviceMemory < 4` → renders nothing (StaticBrain fallback lands step 8). |
+| `CanvasScene` | The persistent R3F stage. `fixed inset-0 -z-10`, `pointer-events: none`, `aria-hidden`, `frameloop="demand"` — renders only when invalidated, no idle animation (P4). The only module that imports three/fiber. |
+| `CanvasDirector` | The orchestrator. Only writer to the 3D scene (rule 3). Receives page scroll progress; interpolates named camera/lighting states from `scene/*`. Step 5: empty skeleton. |
 
 ## Reduced motion
 

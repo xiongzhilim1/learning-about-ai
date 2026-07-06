@@ -17,6 +17,7 @@ import Lenis from "lenis";
 import { useReducedMotion, useScroll, type MotionValue } from "framer-motion";
 import { lenisLerp } from "@/design/motion";
 import Cursor from "@/design/primitives/Cursor";
+import FixedCanvas from "@/design/primitives/FixedCanvas";
 
 interface PageScroll {
   /** 0 → 1 progress through the whole page. Scrubber, not trigger (P3). */
@@ -32,7 +33,13 @@ export function usePageScroll(): PageScroll {
   return ctx;
 }
 
-export default function PageShell({ children }: { children: ReactNode }) {
+export interface PageShellProps {
+  /** Mount the persistent R3F stage behind the content (spec Part 2 topology). */
+  canvas?: boolean;
+  children: ReactNode;
+}
+
+export default function PageShell({ canvas = false, children }: PageShellProps) {
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll();
 
@@ -51,6 +58,7 @@ export default function PageShell({ children }: { children: ReactNode }) {
 
   return (
     <PageScrollContext.Provider value={{ progress: scrollYProgress }}>
+      {canvas && <FixedCanvas />}
       <Cursor />
       {children}
     </PageScrollContext.Provider>

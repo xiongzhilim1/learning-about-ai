@@ -7,7 +7,7 @@
  * font-body = Source Sans 3, font-mono = Fira Code).
  */
 
-import type { ElementType, ReactNode } from "react";
+import { createElement, type ElementType, type ReactNode } from "react";
 
 export type TypeRole =
   | "display"
@@ -57,7 +57,9 @@ function make(role: TypeRole) {
     const classes = className
       ? `${roleClasses[role]} ${className}`
       : roleClasses[role];
-    return <Tag className={classes}>{children}</Tag>;
+    // createElement, not JSX: R3F's JSX augmentation widens ElementType so
+    // JSX children inference collapses to `never` for a polymorphic Tag.
+    return createElement(Tag, { className: classes }, children);
   }
   TypeComponent.displayName = `Type.${role}`;
   return TypeComponent;
