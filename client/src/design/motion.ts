@@ -32,6 +32,9 @@ export const ease: Record<EaseToken, [number, number, number, number]> = {
 /** Rise reveal travel distance in px (spec Part 4: "24px below to rest"). */
 export const riseOffset = 24;
 
+/** Lenis smoothing factor (spec Part 2: "smooth: true, lerp: 0.1"). */
+export const lenisLerp = 0.1;
+
 /** Default whileInView viewport config for reveals (spec Part 5). */
 export const revealViewport = { once: true, margin: "-15%" } as const;
 

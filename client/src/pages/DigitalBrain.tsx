@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { useTitle } from "@/lib/useTitle";
+import PageShell from "@/design/primitives/PageShell";
 import SectionEyebrow from "./digital-brain/SectionEyebrow";
 import ConsoleBlock from "./digital-brain/ConsoleBlock";
 import WireDiagram from "./digital-brain/WireDiagram";
@@ -24,7 +25,8 @@ export default function DigitalBrain() {
   useTitle("A Brain You Can Fork");
 
   return (
-    <div>
+    <PageShell>
+      <div>
       {/* § 01 — HERO */}
       <section className="py-24 md:py-32" style={{ background: "#2D2A26" }}>
         <div className="container">
@@ -550,6 +552,7 @@ cat README.md`}
       </section>
 
     </div>
+    </PageShell>
   );
 }
 
