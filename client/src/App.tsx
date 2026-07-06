@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AboutMe from "@/pages/AboutMe";
+import DesignGuide from "@/pages/DesignGuide";
 import DigitalBrain from "@/pages/DigitalBrain";
 import NotFound from "@/pages/NotFound";
 import { Redirect, Route, Switch } from "wouter";
@@ -22,6 +23,7 @@ function App() {
               </Route>
               <Route path="/about" component={AboutMe} />
               <Route path="/digital-brain" component={DigitalBrain} />
+              <Route path="/design" component={DesignGuide} />
               <Route path="/ai/*?" component={AiRoutes} />
               <Route component={NotFound} />
             </Switch>
