@@ -4,6 +4,7 @@ import AboutMe from "@/pages/AboutMe";
 import DesignGuide from "@/pages/DesignGuide";
 import DigitalBrain from "@/pages/DigitalBrain";
 import NotFound from "@/pages/NotFound";
+import GalleryPrototype from "@/pages/proto/GalleryPrototype";
 import { Redirect, Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -16,6 +17,10 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
+          <Switch>
+            {/* PROTOTYPE (issue #10): outside SiteShell so the gallery owns the whole screen. */}
+            <Route path="/proto/gallery" component={GalleryPrototype} />
+            <Route>
           <SiteShell>
             <Switch>
               <Route path="/">
@@ -28,6 +33,8 @@ function App() {
               <Route component={NotFound} />
             </Switch>
           </SiteShell>
+            </Route>
+          </Switch>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
