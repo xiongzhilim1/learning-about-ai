@@ -4,6 +4,7 @@ import AboutMe from "@/pages/AboutMe";
 import DesignGuide from "@/pages/DesignGuide";
 import DigitalBrain from "@/pages/DigitalBrain";
 import NotFound from "@/pages/NotFound";
+import ProtoInstrument from "@/pages/proto/ProtoInstrument";
 import { Redirect, Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -24,6 +25,7 @@ function App() {
               <Route path="/about" component={AboutMe} />
               <Route path="/digital-brain" component={DigitalBrain} />
               <Route path="/design" component={DesignGuide} />
+              <Route path="/proto/instrument" component={ProtoInstrument} />
               <Route path="/ai/*?" component={AiRoutes} />
               <Route component={NotFound} />
             </Switch>
