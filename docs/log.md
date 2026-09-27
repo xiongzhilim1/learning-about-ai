@@ -156,3 +156,9 @@ Next: step 5 — `FixedCanvas` + empty `CanvasDirector`, verify chunk-split and 
 - Conducted full visual + content audit across all pages
 - Identified 20 issues across design/UX and content quality
 - Categorized into ship-blocking, high-impact/low-effort, high-impact/medium-effort, and content polish
+
+### 2026-09-27 — Wayfinder map: portfolio-first site
+
+- Charted the next phase as a wayfinder map on GitHub Issues: [#2 Portfolio-first site: find the way to a locked spec](https://github.com/xiongzhilim1/learning-about-ai/issues/2)
+- Destination: a locked spec for a portfolio-first site (AI strategy, Deployed PM, Deployment Strategist roles, paid projects, speaking). /life and /journal ship as signposted placeholders. Design moves off the AI-generated look.
+- Nine child tickets (#3 to #11) with native blocking. Research ticket #4 dispatched to a background agent.
