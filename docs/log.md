@@ -162,3 +162,4 @@ Next: step 5 — `FixedCanvas` + empty `CanvasDirector`, verify chunk-split and 
 - Charted the next phase as a wayfinder map on GitHub Issues: [#2 Portfolio-first site: find the way to a locked spec](https://github.com/xiongzhilim1/learning-about-ai/issues/2)
 - Destination: a locked spec for a portfolio-first site (AI strategy, Deployed PM, Deployment Strategist roles, paid projects, speaking). /life and /journal ship as signposted placeholders. Design moves off the AI-generated look.
 - Nine child tickets (#3 to #11) with native blocking. Research ticket #4 dispatched to a background agent.
+- Resolved Positioning (#3): strategist who builds, claim on encoded judgment, lead audience deployment-role hiring managers. Added CONTEXT.md glossary.
