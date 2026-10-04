@@ -163,3 +163,4 @@ Next: step 5 — `FixedCanvas` + empty `CanvasDirector`, verify chunk-split and 
 - Destination: a locked spec for a portfolio-first site (AI strategy, Deployed PM, Deployment Strategist roles, paid projects, speaking). /life and /journal ship as signposted placeholders. Design moves off the AI-generated look.
 - Nine child tickets (#3 to #11) with native blocking. Research ticket #4 dispatched to a background agent.
 - Resolved Positioning (#3): strategist who builds, claim on encoded judgment, lead audience deployment-role hiring managers. Added CONTEXT.md glossary.
+- Resolved Design direction (#10): editorial print base, image-led teasers with text fallback, one outcome block per case study, sage and Fira Code dropped from portfolio pages. Logged D-021. Course restyle question passed to Fate of the courses (#8). Added Teaser and Outcome block to CONTEXT.md.

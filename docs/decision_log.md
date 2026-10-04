@@ -145,3 +145,10 @@ Format: **Decision** / **Why** / **Alternatives considered** / **Sean's call**
 - **Why**: Each choice argues something true about the system; none is decorative. All three are one-line changes if the browser check disagrees.
 - **Alternatives**: Spheres (reads as generic dataviz); full mesh edges (implies peer-to-peer writes, which the protocol forbids); uniform sizes (hides the working brain's role).
 - **Sean's call**: Pending — review at /design.
+
+## D-021: Portfolio design direction is editorial print
+- **Date**: 2026-10-04
+- **Decision**: The portfolio uses Editorial print as its base: paper `#FAF7F2`, terracotta as the only spot ink, light Fraunces for display and body, Source Sans 3 only for small labels, hairline rules, and no cards, shadows, icon badges, gradients, sage or Fira Code. Case studies show up as image-led teasers (text-excerpt fallback), and each one opens with a single outcome block. Detail: [issue #10](https://github.com/xiongzhilim1/learning-about-ai/issues/10#issuecomment-5981054342).
+- **Why**: Sean found editorial the cleanest and crispest of the three prototypes. The gallery's "show the work" teaser and the instrument's scannable outcome row each address what hiring managers look for (#4) without bringing in the gallery's sparse chrome or the instrument's cold one-sheet feel.
+- **Alternatives**: Technical instrument as lead (rejected: rigorous but reads like a resume); work-first gallery as lead (borrowed only the teaser); text-only teasers (fallback only).
+- **Sean's call**: Approved. Whether to restyle the courses is deferred to #8.

@@ -25,3 +25,11 @@ _Avoid_: Portfolio items, projects (as the umbrella term)
 **Deployment roles**:
 The target role family. "Deployed PM" is not a live title; the nearest real ones are Deployment Strategist, Deployment Lead, AI Deployment Manager, and Applied AI Strategist.
 _Avoid_: Deployed PM (as a title)
+
+**Teaser**:
+How a case study appears before you click into it: a large preview image with the title and one concrete detail, or a big text excerpt when there's no showable visual.
+_Avoid_: Card, tile, thumbnail
+
+**Outcome block**:
+The single scannable summary at the top of a case study (context, role, what was built, outcome, status). It exists only there.
+_Avoid_: Spec sheet, stats panel
