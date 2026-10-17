@@ -13,13 +13,13 @@
  * renders once on mount and then rests (P4: reveal, then rest).
  */
 
-import { useLayoutEffect } from "react";
-import { useThree } from "@react-three/fiber";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
 import type { PerspectiveCamera } from "three";
 import type { MotionValue } from "framer-motion";
 import { canonical } from "@/design/scene/cameras";
 import { prelude } from "@/design/scene/lighting";
-import BrainMesh from "@/design/scene/BrainMesh";
+import BrainMesh, { brainNodes } from "@/design/scene/BrainMesh";
 
 export interface CanvasDirectorProps {
   /** Whole-page scroll progress (0 → 1) from PageShell. */
@@ -38,6 +38,37 @@ export default function CanvasDirector({ progress }: CanvasDirectorProps) {
     camera.updateProjectionMatrix();
     invalidate();
   }, [camera, invalidate]);
+
+  // Dev-only debug hook: the canvas is opaque to DOM selectors, so the
+  // verifier reads scene state from window.__brain. Stripped from prod builds.
+  const gl = useThree((s) => s.gl);
+  const frames = useRef(0);
+  useFrame(() => {
+    frames.current += 1;
+  });
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const w = window as Window & { __brain?: unknown };
+    w.__brain = {
+      get state() {
+        return {
+          beat: 0,
+          nodes: brainNodes.map((n) => ({ name: n.name, position: n.position })),
+          frames: frames.current,
+          camera: camera.position.toArray(),
+          renderer: {
+            geometries: gl.info.memory.geometries,
+            textures: gl.info.memory.textures,
+            programs: gl.info.programs?.length ?? 0,
+            calls: gl.info.render.calls,
+          },
+        };
+      },
+    };
+    return () => {
+      delete w.__brain;
+    };
+  }, [camera, gl]);
 
   return (
     <>
