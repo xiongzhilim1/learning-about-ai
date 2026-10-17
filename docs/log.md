@@ -174,3 +174,9 @@ Next: step 5 — `FixedCanvas` + empty `CanvasDirector`, verify chunk-split and 
 - Executed end to end once (run 20261017-143636): launch → doctor → approach-selector (result, reset, back, back-subtracts, deep-dive) → canvas mount, rest budget, leak cycle → stop. Evidence survived cleanup.
 - Finding: each /digital-brain mount retains a WebGL renderer/context (1 → 6 after 5 in-app round trips), reproduced on the prod build without the hook. Logged to todo; not fixed.
 - Finding: port 5173 is held by a vite from another checkout (orca proto-editorial); doctor now checks port ownership and server cwd.
+
+### 2026-10-17 — Verification Phase 2-lite: planted-bug eval
+
+- Planted 5 bugs plus 1 control in worktrees (`~/learning-about-ai-p2/cand-a..f`); ran 6 fresh verifier agents in parallel with identical briefs.
+- Result: 5/5 caught with the right feature named, 0 false PASS, 0 false FAIL on the control. Recipe-alone catch rate 4/5: the selector back-subtracts assertion (`expect-text "14/18"`) passed on the bugged build; the verifier caught it from the snapshot.
+- 13 map/harness defects logged in `docs/verification/phase-2-lite.md`; fixes 1–3 and 9 recommended before Phase 5.
