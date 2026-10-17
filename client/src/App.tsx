@@ -1,14 +1,16 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import AboutMe from "@/pages/AboutMe";
-import DesignGuide from "@/pages/DesignGuide";
-import DigitalBrain from "@/pages/DigitalBrain";
 import NotFound from "@/pages/NotFound";
+import { lazy, Suspense } from "react";
 import { Redirect, Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import SiteShell from "./layouts/SiteShell";
-import AiRoutes from "./sections/ai/routes";
+
+const AboutMe = lazy(() => import("@/pages/AboutMe"));
+const DesignGuide = lazy(() => import("@/pages/DesignGuide"));
+const DigitalBrain = lazy(() => import("@/pages/DigitalBrain"));
+const AiRoutes = lazy(() => import("./sections/ai/routes"));
 
 function App() {
   return (
@@ -17,6 +19,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <SiteShell>
+            <Suspense fallback={null}>
             <Switch>
               <Route path="/">
                 <Redirect to="/ai/prompt-engineering" />
@@ -27,6 +30,7 @@ function App() {
               <Route path="/ai/*?" component={AiRoutes} />
               <Route component={NotFound} />
             </Switch>
+            </Suspense>
           </SiteShell>
         </TooltipProvider>
       </ThemeProvider>
