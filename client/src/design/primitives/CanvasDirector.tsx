@@ -15,7 +15,7 @@
 
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import type { PerspectiveCamera } from "three";
+import type { Mesh, PerspectiveCamera, Texture } from "three";
 import type { MotionValue } from "framer-motion";
 import { canonical } from "@/design/scene/cameras";
 import { prelude } from "@/design/scene/lighting";
@@ -39,9 +39,30 @@ export default function CanvasDirector({ progress }: CanvasDirectorProps) {
     invalidate();
   }, [camera, invalidate]);
 
+  // three keeps one DFG LUT texture for the whole page, shared by every
+  // renderer's standard materials, and each renderer that uploads it adds a
+  // dispose listener to it. R3F's unmount never disposes that texture, so the
+  // listener kept each old renderer and its WebGL context alive: one more per
+  // visit. Disposing it here drops the listener; the next renderer re-uploads
+  // it on first use. Layout cleanup runs before R3F disposes the materials.
+  const scene = useThree((s) => s.scene);
+  const gl = useThree((s) => s.gl);
+  useLayoutEffect(
+    () => () => {
+      scene.traverse((o) => {
+        const material = (o as Mesh).material;
+        if (!material || Array.isArray(material)) return;
+        const props = gl.properties.get(material) as {
+          uniforms?: { dfgLUT?: { value: Texture | null } };
+        };
+        props.uniforms?.dfgLUT?.value?.dispose();
+      });
+    },
+    [gl, scene],
+  );
+
   // Dev-only debug hook: the canvas is opaque to DOM selectors, so the
   // verifier reads scene state from window.__brain. Stripped from prod builds.
-  const gl = useThree((s) => s.gl);
   const frames = useRef(0);
   useFrame(() => {
     frames.current += 1;
