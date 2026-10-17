@@ -20,12 +20,13 @@ Preconditions:
 
 - Doctor is all `ok`.
 
-- **Open.** Run `scripts/site open /ai/prompt-engineering/exercises` then `scripts/site expect-text "Showing 15 exercises"`.
+- **Sub-nav entry.** Run `scripts/site open /ai/prompt-engineering`, then `scripts/site click link "/^Exercises/"` and `scripts/site page-state`. URL is `/ai/prompt-engineering/exercises`. Run `scripts/site expect-text "Showing 15 exercises"`.
 - **Tenet filter.** Run `scripts/site click button "🧠 CoT"` then `scripts/site expect-text "Showing 3 exercises"`.
-- **Combine level.** Run `scripts/site click button "intermediate"` then `scripts/site expect-text "/Showing \d+ exercises?/"`. Snapshot and confirm every listed card shows both `intermediate` and `🧠`.
-- **Toggle off.** Run `scripts/site click button "🧠 CoT"` (active chip clears) and `scripts/site click button "intermediate"`. Then `scripts/site expect-text "Showing 15 exercises"`.
-- **Expand.** Run `scripts/site click button "/Few-Shot Email Builder/"`, then snapshot. The detail panel for that card is present. Click it again and the panel is gone.
-- **Proof.** Run `scripts/site snapshot ex-filter-cot` right after the tenet filter and `scripts/site snapshot ex-expanded` right after expanding.
+- **Combine level.** Run `scripts/site click button "intermediate"` then `scripts/site expect-text "Showing 2 exercises"` and `scripts/site snapshot ex-filter-cot-intermediate`. Every listed card shows both `intermediate` and `🧠`.
+- **Toggle off.** First prove the chip is on: `scripts/site click button "intermediate"` (clear the level filter) and `scripts/site expect-text "Showing 3 exercises"`. Then `scripts/site click button "🧠 CoT"` (active chip clears) and `scripts/site expect-text "Showing 15 exercises"`. Without the "Showing 3" assertion first, a dead chip passes this step.
+- **Expand.** Run `scripts/site expect-text "Expected Outcome" --absent`, `scripts/site click button "/Few-Shot Email Builder/"`, then `scripts/site expect-text "Expected Outcome"` and `scripts/site snapshot ex-expanded`.
+- **Collapse.** Run `scripts/site click button "/Few-Shot Email Builder/"` again, then `scripts/site expect-text "Expected Outcome" --absent` and `scripts/site snapshot ex-collapsed`.
+- **Proof.** Run `scripts/site snapshot ex-filter-cot` right after the tenet filter. The expand/collapse and combine steps save their own snapshots.
 
 ## Gotchas
 

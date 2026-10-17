@@ -26,6 +26,7 @@ Preconditions:
 - **Volume redirect.** Run `scripts/site open /ai`. URL is `/ai/prompt-engineering`.
 - **Header: Digital Brain.** Run `scripts/site click link "Digital Brain"` then `scripts/site expect-text "I built a brain my agent can read."` and `scripts/site page-state`. URL `/digital-brain`, title `A Brain You Can Fork | Xiong Zhi Lim`.
 - **Header: AI Education.** Run `scripts/site click link "AI Education"` then `scripts/site page-state`. URL `/ai/prompt-engineering`.
+- **Header: About.** Run `scripts/site click link "About"` then `scripts/site page-state`. URL `/about`, title `About | Xiong Zhi Lim`.
 - **Volumes.** Run `scripts/site click link "Context Engineering"` and `scripts/site page-state` (URL `/ai/context-engineering`), then `scripts/site click link "Harness Engineering"` and `scripts/site page-state` (URL `/ai/harness-engineering`).
 - **Deep link.** Run `scripts/site open /ai/context-engineering/checklist`. Title `Checklist — Context Engineering | Xiong Zhi Lim`, console errors 0. Run `scripts/site expect-text "Practitioner's Checklist"`.
 - **404.** Run `scripts/site open /ai/nope` then `scripts/site expect-text "Page Not Found"`. Repeat for `/nope`.

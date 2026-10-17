@@ -25,13 +25,18 @@ Hands and eyes (operate on the run's single tab):
   click <role> <name|/regex/>    click by ARIA role + accessible name
   expect-text <text|/regex/> [--absent] [--timeout ms]
                                  wait for visible text (or its absence); exit 1 on failure
+  expect-aria </regex/>          match the page's ARIA snapshot (multi-line) against a regex;
+                                 use it to pin structure, e.g. "the line after X is Y"; exit 1 on failure
   page-state                     url, title, viewport
   screenshot <name> [--full]     PNG into the evidence dir
   snapshot <name>                ARIA snapshot (YAML) of the page into the evidence dir
 
 Canvas instruments (BrainMesh pages only: /digital-brain, /design):
-  brain-state [--save name]      canvas + WebGL2 + window.__brain.state
-  cpu-trace <seconds> [--scroll] Chrome trace (open in Perfetto / DevTools); prints frame delta
+  brain-state [--save name] [--expect-frames N]
+                                 canvas + WebGL2 + window.__brain.state; exit 1 if frames != N
+  cpu-trace <seconds> [--scroll] [--expect-rest]
+                                 Chrome trace (open in Perfetto / DevTools); prints frame delta;
+                                 --expect-rest exits 1 if any frame rendered during the trace
   heap-snapshot <name>           GC, then .heapsnapshot + JS heap used
 
 Run selection: SITE_RUN=<id>, else the only live run. Evidence: .verify/evidence/<id>/
@@ -43,7 +48,7 @@ const opt = (name, dflt) => {
   const i = args.indexOf(name);
   return i >= 0 ? args[i + 1] : dflt;
 };
-const positional = args.filter((a, i) => !a.startsWith("--") && !(i > 0 && args[i - 1].startsWith("--") && ["--run", "--timeout", "--save"].includes(args[i - 1])));
+const positional = args.filter((a, i) => !a.startsWith("--") && !(i > 0 && ["--run", "--timeout", "--save", "--expect-frames"].includes(args[i - 1])));
 
 const alive = (pid) => {
   try {
@@ -172,8 +177,10 @@ async function doctor(run) {
   check(deep.includes('<div id="root">'), "deep link falls back to index.html");
   check(alive(run.chromePid) && (await fetch(`http://127.0.0.1:${run.cdpPort}/json/version`).then((r) => r.ok).catch(() => false)), `chrome pid ${run.chromePid} answers CDP on ${run.cdpPort}`);
   const head = git("rev-parse", "--short", "HEAD");
-  const dirty = git("status", "--porcelain", "--untracked-files=no") ? " (dirty: uncommitted changes are being served)" : "";
-  checks.push(`info commit ${head}${dirty}; launched at ${run.commit}`);
+  const changed = git("status", "--porcelain", "--untracked-files=no").split("\n").filter(Boolean).length;
+  const dirty = changed ? ` dirty (${changed} uncommitted file${changed === 1 ? "" : "s"} being served)` : "";
+  checks.push(`info commit ${head}; launched at ${run.commit}`);
+  checks.push(`info tree ${changed ? dirty.trim() : "clean"}`);
   checks.push(`info run ${run.run}  url ${run.url}  evidence ${path.join(EVIDENCE, run.run)}`);
   console.log(checks.join("\n"));
   const failed = checks.some((c) => c.startsWith("FAIL"));
@@ -250,6 +257,19 @@ async function main() {
       });
     }
 
+    case "expect-aria": {
+      const pattern = positional[0];
+      if (!pattern || !pattern.startsWith("/")) die('usage: expect-aria "/regex/"');
+      return withPage(run, async (page) => {
+        const aria = await page.locator("body").ariaSnapshot();
+        const ok = toName(pattern).test(aria);
+        const out = `${ok ? "PASS" : "FAIL"} aria matches: ${pattern}`;
+        console.log(out);
+        record(run, `expect-aria ${pattern} -> ${out}`);
+        if (!ok) process.exit(1);
+      });
+    }
+
     case "page-state":
       return withPage(run, async (page) => {
         const out = `url ${page.url().replace(run.url, "")}  title "${await page.title()}"  viewport ${JSON.stringify(page.viewportSize() ?? (await page.evaluate(() => ({ width: innerWidth, height: innerHeight }))))}`;
@@ -277,7 +297,11 @@ async function main() {
         console.log(json);
         const save = opt("--save");
         if (save) fs.writeFileSync(path.join(EVIDENCE, run.run, `${save}.brain.json`), json + "\n");
-        record(run, `brain-state -> canvas:${s.canvas} webgl2:${s.webgl2} hook:${s.hook} frames:${s.state?.frames ?? "-"}${save ? ` saved ${save}.brain.json` : ""}`);
+        const want = opt("--expect-frames");
+        const verdict = want === undefined ? "" : s.state?.frames === Number(want) ? `  PASS frames == ${want}` : `  FAIL frames ${s.state?.frames ?? "-"} != ${want}`;
+        if (verdict) console.log(verdict.trim());
+        record(run, `brain-state -> canvas:${s.canvas} webgl2:${s.webgl2} hook:${s.hook} frames:${s.state?.frames ?? "-"}${save ? ` saved ${save}.brain.json` : ""}${verdict}`);
+        if (verdict.includes("FAIL")) process.exit(1);
       });
 
     case "cpu-trace": {
@@ -297,9 +321,12 @@ async function main() {
         } else await page.waitForTimeout(seconds * 1000);
         await page.context().browser().stopTracing();
         const after = await brainState(page);
-        const out = `${path.relative(REPO, file)}  ${seconds}s${flag("--scroll") ? " scrolling" : " idle"}  brain frames ${before.state?.frames ?? "?"} -> ${after.state?.frames ?? "?"}  draw calls ${after.state?.renderer.calls ?? "?"}`;
+        const rested = before.state && after.state && before.state.frames === after.state.frames;
+        const verdict = flag("--expect-rest") ? (rested ? "  PASS at rest" : "  FAIL frames rendered during trace") : "";
+        const out = `${path.relative(REPO, file)}  ${seconds}s${flag("--scroll") ? " scrolling" : " idle"}  brain frames ${before.state?.frames ?? "?"} -> ${after.state?.frames ?? "?"}  draw calls ${after.state?.renderer.calls ?? "?"}${verdict}`;
         console.log(out);
-        record(run, `cpu-trace ${seconds}${flag("--scroll") ? " --scroll" : ""} -> ${out}`);
+        record(run, `cpu-trace ${seconds}${flag("--scroll") ? " --scroll" : ""}${flag("--expect-rest") ? " --expect-rest" : ""} -> ${out}`);
+        if (verdict.includes("FAIL")) process.exit(1);
       });
     }
 

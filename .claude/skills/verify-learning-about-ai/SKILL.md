@@ -7,7 +7,7 @@ description: Drive the real learning-about-ai site (Vite + React SPA, plus the R
 
 You drive the real site the way a user would and bring back evidence. All driving goes through `scripts/site` (Playwright over CDP, at the repo root). Run every command from the repo root.
 
-Read `features/README.md` before driving. It is the maintained map of what to verify and how.
+Read `.claude/skills/verify-learning-about-ai/features/README.md` (and the feature files beside it) before driving. It is the maintained map of what to verify and how.
 
 ## The judge rule
 
@@ -44,7 +44,7 @@ scripts/site doctor
 ```
 
 Read-only. Run it first, and again whenever anything looks off. All of these must be `ok`:
-vite pid alive · port owned by that pid · vite cwd is this repo · index served · `main.tsx` transforms · deep link falls back to index · Chrome answers CDP. It also prints the commit and whether the tree is dirty.
+vite pid alive · port owned by that pid · vite cwd is this repo · index served · `main.tsx` transforms · deep link falls back to index · Chrome answers CDP. It also prints the commit and always one tree line: `info tree clean` or `info tree dirty (N uncommitted files being served)`.
 
 Never drive port 5173 or any server this run did not start. On this machine 5173 has been held by a vite from a different checkout (`~/orca/workspaces/...`), which serves different code.
 
@@ -56,6 +56,7 @@ scripts/site click <role> "<name>"             # exact accessible name
 scripts/site click <role> "/<regex>/"          # regex name; must match exactly 1 element
 scripts/site expect-text "<text>"              # waits ≤5s for visible text; exit 1 on failure
 scripts/site expect-text "<text>" --absent
+scripts/site expect-aria '/<regex>/'           # regex over the page's ARIA snapshot (multi-line); pins structure
 scripts/site page-state                        # url, title, viewport
 scripts/site snapshot <name>                   # ARIA snapshot → <name>.aria.yml
 scripts/site screenshot <name> [--full]        # → <name>.png
@@ -64,13 +65,15 @@ scripts/site screenshot <name> [--full]        # → <name>.png
 - Selectors are ARIA role + accessible name. The markup has few aria-labels or data attributes, so the name is the visible text (emoji included: `button "🧠 CoT"`).
 - `click` fails if the name matches 0 or 2+ elements. Use an anchored regex to disambiguate. Never fall back to coordinates or nth-child.
 - The tab persists between commands (one Chrome per run), so in-app state survives across `click` calls. `open` is a full page load and resets all React state.
-- Window is 1280×900, so the page viewport is 1280 wide (desktop). The 3D canvas gate needs >768px width and WebGL2. Both hold here.
+- The Chrome window is 1280×900. The page viewport is 1280×813, which is what `page-state` reports. The width is what the canvas gate checks.
+- Assert what you claim. `expect-text` proves only that the text is somewhere on the page. When the claim is about structure ("Classic RAG is first at 14/18"), use `expect-aria` with a regex that pins the value to its row. A number that appears anywhere is not a ranking.
+- zsh does not word-split variables. A loop over `"open /"` passes one argument. Write each command out, or use arrays. The 3D canvas gate needs >768px width and WebGL2. Both hold here.
 
 ### Canvas instruments (BrainMesh pages only)
 
 ```bash
-scripts/site brain-state [--save <name>]       # canvas count, webgl2, window.__brain.state
-scripts/site cpu-trace <seconds> [--scroll]    # Chrome trace JSON; prints brain frames before → after
+scripts/site brain-state [--save <name>] [--expect-frames N]   # canvas, webgl2, window.__brain.state; exit 1 if frames != N
+scripts/site cpu-trace <seconds> [--scroll] [--expect-rest]     # Chrome trace JSON; --expect-rest exits 1 if any frame rendered
 scripts/site heap-snapshot <name>              # forces GC, writes .heapsnapshot, prints JS heap used
 ```
 
@@ -91,7 +94,7 @@ scripts/site stop
 ```
 
 Kills only this run's vite and Chrome pids (from `.verify/runs/<id>/state.json`) and deletes `.verify/runs/<id>/`. Evidence in `.verify/evidence/<id>/` is kept. Never `pkill vite` or `pkill Chrome`. Other runs and the user's own servers share those names. Run `stop` after failed attempts too, so broken runs don't strand ports.
-Confirm: `pgrep -f .verify/runs/<id>` prints nothing, and the evidence dir still lists its files.
+Confirm: `ps -ax -o pid,command | grep '[.]verify/runs/<id>'` prints nothing (a plain `pgrep -f` matches its own shell), and the evidence dir still lists its files.
 
 ## Maintenance
 

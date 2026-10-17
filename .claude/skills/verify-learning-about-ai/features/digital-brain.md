@@ -20,16 +20,16 @@ The long-form `/digital-brain` essay. It has three interactive widgets (console 
 
 Preconditions:
 
-- Doctor is all `ok`. The viewport is 1280×900 (canvas gate needs >768px and WebGL2).
+- Doctor is all `ok`. The viewport is 1280 wide (the canvas gate needs >768px and WebGL2).
 
 - **Open.** Run `scripts/site open /digital-brain`. Title `A Brain You Can Fork | Xiong Zhi Lim`, console errors 0. Run `scripts/site expect-text "I built a brain my agent can read."`.
 - **Console tabs.** Run `scripts/site click button "LOG.MD"` then `scripts/site expect-text "SECOND_BRAIN / LOG.MD"`. Run `scripts/site click button "MEMORY.MD"` then `scripts/site expect-text "CLAUDE / MEMORY.MD"`.
-- **Turns.** Run `scripts/site click button "/T2 — SHOW YOUR WORK/"`, then `scripts/site snapshot db-turns`. The annotation differs from the T1 annotation.
+- **Turns.** Run `scripts/site snapshot db-turns-t1` (T1 baseline), then `scripts/site click button "/T2 — SHOW YOUR WORK/"` and `scripts/site snapshot db-turns`. The annotation and code block differ from `db-turns-t1`.
 - **Topology.** Run `scripts/site expect-text "Three layers. Cortex, chapters, squads."` (default). Then `scripts/site click button "Solo"` and `scripts/site expect-text "One brain, hybrid, all of it traversable."`. Then `scripts/site click button "Enterprise"` and `scripts/site expect-text "Five fractal layers. The same shape, all the way down."`.
-- **Canvas mount.** Run `scripts/site brain-state --save db-canvas-mount`. Expect `canvas: 1`, `webgl2: true`, `hook: true`, `beat: 0`, five nodes named `second, formation, craft, atlas, frontier`, `renderer.geometries: 6` (5 icosahedra + 1 edge set).
-- **Rest budget.** Run `scripts/site cpu-trace 3` and `scripts/site cpu-trace 3 --scroll`. Both print `brain frames 1 -> 1`. Any increase means something is invalidating the scene at rest. That is a FAIL until step 7 introduces scroll-driven frames (then update this line).
+- **Canvas mount.** Directly after a fresh `scripts/site open /digital-brain` (no clicks in between), run `scripts/site brain-state --save db-canvas-mount --expect-frames 1`. It must print `PASS frames == 1`. Also expect `canvas: 1`, `webgl2: true`, `hook: true`, `beat: 0`, five nodes named `second, formation, craft, atlas, frontier`, `renderer.geometries: 6` (5 icosahedra + 1 edge set).
+- **Rest budget.** Run `scripts/site cpu-trace 3 --expect-rest` and `scripts/site cpu-trace 3 --scroll --expect-rest`. Both must print `PASS at rest` (`brain frames 1 -> 1`). Any increase means something is invalidating the scene at rest. That is a FAIL until step 7 introduces scroll-driven frames (then update this line).
 - **Leak cycle.** From `/digital-brain` (fresh `open`), run `scripts/site heap-snapshot db-leak-base`. Then 5× in-app round trips: `scripts/site click link "AI Education"`, `scripts/site expect-text "Prompt Engineering"`, `scripts/site click link "Digital Brain"`, `scripts/site expect-text "I built a brain my agent can read."`. Then `scripts/site heap-snapshot db-leak-after-5`. Compare the printed `js-heap-used`. Report growth per cycle. Open both in DevTools → Memory → Comparison and look for retained `WebGLRenderer`, `BufferGeometry`, `Mesh`.
-- **Proof.** The `commands.log` lines for `brain-state`, both `cpu-trace`s, and both `heap-snapshot`s, plus `db-turns.aria.yml` and the saved `db-canvas-mount.brain.json`.
+- **Proof.** Run `scripts/site snapshot db-topology` after the Enterprise step. Also keep the `commands.log` lines for `brain-state`, both `cpu-trace`s, and both `heap-snapshot`s, plus `db-turns-t1.aria.yml`, `db-turns.aria.yml` and the saved `db-canvas-mount.brain.json`.
 
 ## Gotchas
 
