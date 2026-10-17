@@ -46,3 +46,25 @@ Harness and doc problems:
 - The verifiers were strong. Each ran about 20 steps in around 3 minutes with no leftover processes, and none tried to bend a recipe to make it pass. All six followed the "don't weaken the journey" rule.
 - The map is the weak link, not the agents. Defects 1 to 3 are all cases of "the assertion is weaker than the claim". Fixing them takes the recipe-alone catch rate to 5/5 and removes reliance on verifier diligence.
 - Before the trial (Phase 5), apply fixes 1 to 3 and 9, then rerun candidate a with a fresh verifier to confirm the recipe now catches it on its own.
+
+## Rerun after fixes (skill at `63d22c0`)
+
+All 13 defects were fixed in `63d22c0`. Each changed step was smoke-tested on `main` before the rerun. The smoke test caught one new trap: `/Checklist/` matches two links, so the step now uses the exact name. Candidates a, b and d were rebased onto the fixed `main`, and each got a fresh verifier with the same brief.
+
+| Cand | Verdict | Caught by |
+|---|---|---|
+| a (back doesn't subtract) | **FAIL** ✅ | The recipe itself: the RANKING `expect-aria` in "Back subtracts (two undos)" failed (Classic RAG 20/18). No snapshot reading was needed |
+| d (canvas renders at rest) | **FAIL** ✅ | `brain-state --expect-frames 1` (frames 22) and both `cpu-trace --expect-rest` |
+| b (control) | PASS+NOTES ✅ | No app failures; tree reported `clean` |
+
+- **Recipe-alone catch rate is now 5/5.** Candidate a was the gap, and it now fails on an assertion, not on verifier diligence.
+- **New map defect, introduced by the fix.** I inserted "Header: About" before "Volumes", and `/about` has no volume bar, so the Volumes step failed as written in all three reruns. Every verifier correctly blamed the recipe, not the app, so no false FAIL resulted. My smoke test had run About in isolation instead of in recipe order. It is fixed: About now comes after Volumes, there's a gotcha, and the whole navigation recipe was smoke-tested in order.
+- **Ordering gap.** The canvas mount check requires a fresh load, but it was listed after the widget clicks. The canvas steps now run straight after Open, and the reordered recipe was smoke-tested in order.
+- **Remaining minor notes, not fixed:**
+  - `expect-text "Reset" --absent` is a substring check; a role-based check would be tighter.
+  - db-turns compares two snapshots by eye.
+  - The exercise and deep-dive titles aren't asserted.
+
+Lesson for future map edits: smoke-test a changed recipe **in its full order**, not step by step. Step-level smoke tests miss what a step leaves behind for the next one.
+
+Evidence: `.verify/evidence/phase2-lite/rerun-cand-{a,b,d}/`. Worktrees and `p2/cand-*` branches were removed after archiving.

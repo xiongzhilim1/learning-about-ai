@@ -26,14 +26,15 @@ Preconditions:
 - **Volume redirect.** Run `scripts/site open /ai`. URL is `/ai/prompt-engineering`.
 - **Header: Digital Brain.** Run `scripts/site click link "Digital Brain"` then `scripts/site expect-text "I built a brain my agent can read."` and `scripts/site page-state`. URL `/digital-brain`, title `A Brain You Can Fork | Xiong Zhi Lim`.
 - **Header: AI Education.** Run `scripts/site click link "AI Education"` then `scripts/site page-state`. URL `/ai/prompt-engineering`.
-- **Header: About.** Run `scripts/site click link "About"` then `scripts/site page-state`. URL `/about`, title `About | Xiong Zhi Lim`.
 - **Volumes.** Run `scripts/site click link "Context Engineering"` and `scripts/site page-state` (URL `/ai/context-engineering`), then `scripts/site click link "Harness Engineering"` and `scripts/site page-state` (URL `/ai/harness-engineering`).
+- **Header: About.** Run `scripts/site click link "About"` then `scripts/site page-state`. URL `/about`, title `About | Xiong Zhi Lim`.
 - **Deep link.** Run `scripts/site open /ai/context-engineering/checklist`. Title `Checklist — Context Engineering | Xiong Zhi Lim`, console errors 0. Run `scripts/site expect-text "Practitioner's Checklist"`.
 - **404.** Run `scripts/site open /ai/nope` then `scripts/site expect-text "Page Not Found"`. Repeat for `/nope`.
 - **Proof.** Run `scripts/site snapshot nav-404` after the 404 step and `scripts/site snapshot nav-deeplink` after the deep-link step.
 
 ## Gotchas
 
+- The volume bar exists only on `/ai/*` pages. `/about` and `/digital-brain` have none, so the Volumes step must run from an `/ai/*` page (it follows "Header: AI Education" for that reason). Keep About after Volumes.
 - `click link "Context Engineering"` can match more than one link on volume home pages (bar + body cards). If it reports 2+ matches, the page changed. Use an anchored regex and note it here, don't switch to coordinates.
 - The 404 is in-app and HTTP 200 (Vercel rewrites everything to `index.html`). Never assert on status codes.
 - Header links are `hidden` below 768px. At mobile width the path is the hamburger button, which has no accessible name. That path is unmapped until it gets one.
