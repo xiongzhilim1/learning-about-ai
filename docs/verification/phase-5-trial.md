@@ -50,3 +50,26 @@ Tasks were picked to be user-visible or measurable, small, independent (disjoint
 - At a phone-size viewport, the `nav-mobile` recipe passes as written. The toggle's accessible name and `aria-expanded` change between the closed and open states, a menu link routes correctly, and the menu closes afterwards.
 - The viewport override persists across separate `scripts/site` commands. After resetting to desktop width, the desktop header recipe passes.
 - Full sweep at desktop width has no failures.
+
+## Result (merged to `main` at `f7b1849`)
+
+| Task | Commit | Implementer self-check | Verifier verdict | Sean vs verdict |
+|---|---|---|---|---|
+| T1 fix-webgl-leak | `9ee5659` | sweep green, leak 6 → 1 (dev + prod) | **PASS+NOTES** | merged; no disagreement recorded |
+| T2 code-split-routes | `626d067` | sweep green except known leak | **PASS+NOTES** | merged; no disagreement recorded |
+| T3 mobile-nav-a11y | `42a6672` | nav-mobile + desktop nav green | **PASS+NOTES** | merged; no disagreement recorded |
+
+- **T1 root cause.** three r185 keeps one page-wide DFG LUT texture. Every renderer that uploads it adds a dispose listener that closes over that renderer's GL context, and R3F's unmount never disposes the texture, so each visit kept its renderer and context alive. Fix: `CanvasDirector` disposes the texture in a layout-effect cleanup. The verifier went beyond acceptance: production `vite preview` showed 1 → 1 contexts; 10 remounts of `/design` gave a 0-pixel diff in prod; no unmount errors (it attached its own console/pageerror listeners).
+- **T2.** Entry chunk 1,117.77 kB → 319.23 kB (101.75 kB gz). `CanvasScene` grew by 70 bytes (import lines only). The verifier ruled that "met" and stated the call. It also deep-linked every route, and checked that every chunk the production build references exists.
+- **T3.** The toggle is now "Open menu" / "Close menu" with `aria-expanded`. `scripts/site viewport <W>x<H> | reset` holds the emulation through a detached CDP holder process. The verifier stress-tested re-set, bad input, and stop while the viewport was overridden.
+- **Post-merge smoke** (coordinator, not a verdict): build ok; leak 1 → 1 with lazy routes; frames 1 at rest; mobile and desktop nav; 404. Evidence `.verify/evidence/post-merge/`.
+- **Merge conflicts:** none. The files were disjoint by design, and `git merge-tree` was checked before merging.
+
+### What the trial showed
+- **No author/verifier disagreement on 3 of 3.** Verifiers independently found things authors had not: the production build was never driven (T2); the cleanup check can't see the viewport holder (T3); a possible Back-button history loop through the `/ai` redirect (T1's verifier).
+- **Verifiers exceeded their briefs in useful ways:** baselines rebuilt, prod measured, pixel diffs. Cost about 4–8 min per verification.
+- **One brief broken:** T3's implementer ran a baseline check in the main checkout despite "work ONLY here". It was harmless (gitignored evidence only), but this is exactly what Phase 3's hooks should make impossible rather than merely forbidden.
+- **Coordinator catches before launch:** T2's original acceptance was unmeetable (three.js alone is > 500 kB), and found by running the baseline build. Lesson: run every acceptance check against the baseline before handing it out.
+- **Harness gaps to close:** see `docs/todo.md` → Verification harness.
+
+Evidence: `.verify/evidence/phase5-trial/<task>/` (author and verifier runs).

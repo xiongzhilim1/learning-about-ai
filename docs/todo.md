@@ -11,7 +11,7 @@ Persistent backlog for the project. Checked items stay for history. Organized by
 
 ## High impact, low effort
 
-- [ ] Fix WebGL renderer/context retained per /digital-brain mount (1 → 6 after 5 in-app round trips, prod too). Evidence: `.verify/evidence/20261017-143636/db-leak-finding.md`; recipe: verify skill `features/digital-brain.md` → db-canvas-leak
+- [x] Fix WebGL renderer/context retained per /digital-brain mount: fixed in 9ee5659 (D-024), verified PASS+NOTES
 - [x] Add OG meta tags for social sharing (#4)
 - [x] Fix breadcrumb on section home page (#7) — verified already correct
 - [ ] Add `vercel.json` SPA rewrite rule — done, but verify after deploy
@@ -42,10 +42,20 @@ Persistent backlog for the project. Checked items stay for history. Organized by
 
 - [x] Deploy to Vercel
 - [ ] Set up custom domain (if desired)
-- [ ] Consider code-splitting — 1MB JS bundle warning from Vite build (was 500KB with 1 section, now 1MB with 3)
+- [x] Code-split routes: entry 1,118 kB → 319 kB (626d067, D-025). The remaining warning is the three.js CanvasScene chunk (892 kB / 240 kB gz, within budget)
 - [ ] Consider localStorage-based module completion tracking (#8 from audit)
 
 ## Future sections (no timeline)
 
 - [ ] Life/Formation domain (`/life`) — faith, career, relationships
 - [ ] Journal domain (`/journal`) — AI journal, building journal
+
+## Verification harness (from the Phase 5 trial)
+
+- [ ] `scripts/site launch --preview`: drive a production build (vite preview). Code-split and prod-only behavior is currently unverifiable through the harness
+- [ ] `scripts/site back` (browser history) and console/page-error capture across in-app navigation (today `open` reports load-time errors only)
+- [ ] Viewport holder should carry the run id so the documented cleanup check (`grep [.]verify/runs/<id>`) sees it
+- [ ] Map `/design` (canvas review surface; reachable only by URL, so remounts need Back)
+- [ ] Investigate: does Back after clicking "AI Education" loop because of the `/ai` → `/ai/prompt-engineering` redirect history entry? (possible product bug, unconfirmed)
+- [ ] Label the volume bar's mobile menu button (second unnamed button at phone width)
+- [ ] `THREE.Clock` deprecation warning logged once per canvas mount (three r185)

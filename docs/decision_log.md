@@ -166,3 +166,25 @@ Format: **Decision** / **Why** / **Alternatives considered** / **Sean's call**
 - **Why**: CanvasDirector is the only module allowed to write to the scene (rule 3), so it is the one place that knows scene state. The DEV guard keeps it out of production bundles (verified by grep of `dist/`).
 - **Alternatives**: Hook in BrainMesh (knows nodes, not camera/renderer); data attributes on the canvas wrapper (forces re-renders, leaks debug state into prod DOM).
 - **Sean's call**: Approved (2026-10-17).
+
+## D-024: Fix the WebGL leak by disposing three's shared DFG LUT on unmount
+- **Date**: 2026-10-17
+- **Decision**: `CanvasDirector` disposes the page-wide DFG LUT texture (reached via `gl.properties.get(material).uniforms.dfgLUT`) in a layout-effect cleanup, which removes the per-renderer dispose listener that kept old renderers and contexts alive.
+- **Why**: This is the root cause (heap retainers: 6 listener closures after 5 visits). It is placed in CanvasDirector per rule 3, and verified 6 → 1 contexts in dev and prod with no visual change.
+- **Alternatives**: `gl.dispose()` (doesn't remove the listener); importing three's private `getDFGLUT` (deep import, breaks on upgrade); a different material (changes the look); patching R3F/three (vendor patch to maintain).
+- **Risk**: It relies on three internals. A three upgrade could silently break it, and the `db-canvas-leak` check (`--expect-contexts 1`) is the tripwire.
+- **Sean's call**: Merged after a PASS+NOTES verdict (2026-10-17).
+
+## D-025: Code-split at two levels: top-level pages and each AI volume
+- **Date**: 2026-10-17
+- **Decision**: `React.lazy` for About, Design, DigitalBrain, AiRoutes, and each of the three volume route modules. One `Suspense fallback={null}` inside SiteShell's Switch, and one inside SectionLayout so the volume bar stays up. NotFound stays an eager import. No `manualChunks`, and no change to `chunkSizeWarningLimit`.
+- **Why**: The entry chunk drops from 1,118 kB to 319 kB. Splitting only AiRoutes would leave a ~570 kB volumes chunk; per-page splits inside volumes add diff for no gain.
+- **Alternatives**: A single top-level Suspense (would blank the volume bar while loading); a spinner/skeleton fallback (chunks load fast; the brief asked for minimal).
+- **Sean's call**: Merged after a PASS+NOTES verdict (2026-10-17).
+
+## D-026: Mobile nav toggle naming, and how the verifier holds a viewport
+- **Date**: 2026-10-17
+- **Decision**: The toggle's accessible name changes with its state ("Open menu" / "Close menu"), plus `aria-expanded`, with no `aria-controls` (the menu only exists in the DOM when open). `scripts/site viewport` holds `Emulation.setDeviceMetricsOverride` in a detached CDP holder process, with `mobile: false` and DPR 1.
+- **Why**: The state-aware name is what the brief asked for and reads clearly to screen readers. The holder is the only approach that survives the CLI's per-command reconnect without the viewport snapping back to the window size, which would trip the 768px canvas gate.
+- **Alternatives**: A fixed "Menu" name with `aria-expanded` only (the more common ARIA pattern, and still an option); re-applying emulation on every connect (resize flicker); `Browser.setWindowBounds` (headless clamps windows to at least 500px); relaunching Chrome per viewport (loses the tab).
+- **Sean's call**: Merged after a PASS+NOTES verdict (2026-10-17).

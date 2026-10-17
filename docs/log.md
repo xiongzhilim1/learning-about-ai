@@ -181,3 +181,12 @@ Next: step 5 — `FixedCanvas` + empty `CanvasDirector`, verify chunk-split and 
 - Result: 5/5 caught with the right feature named, 0 false PASS, 0 false FAIL on the control. Recipe-alone catch rate 4/5: the selector back-subtracts assertion (`expect-text "14/18"`) passed on the bugged build; the verifier caught it from the snapshot.
 - 13 map/harness defects logged in `docs/verification/phase-2-lite.md`; fixes 1–3 and 9 recommended before Phase 5.
 - Applied all 13 fixes (`63d22c0`: expect-aria, --expect-frames, --expect-rest, doctor tree line, recipe rewrites). Reran a, b, d with fresh verifiers: a FAIL via the ranking assertion (recipe-alone catch now 5/5), d FAIL via the new frame assertions, control PASS+NOTES. Fixed two ordering defects the rerun exposed (About before Volumes, canvas mount after widget clicks). Worktrees and branches removed; evidence archived under `.verify/evidence/phase2-lite/`.
+
+### 2026-10-17 — Verification Phase 5 trial: three agents on real tasks
+
+- Live WebGL context count added to `brain-state` (`--expect-contexts`); the leak check no longer needs heap snapshots (`4618f2c`).
+- Ran T1 fix-webgl-leak, T2 code-split-routes and T3 mobile-nav-a11y in parallel worktrees. Each had a separate implementer and verifier agent. All three verdicts were PASS+NOTES, and all three merged (`f7b1849`).
+- T1: three's page-wide DFG LUT texture held a dispose listener per renderer; CanvasDirector now disposes it on unmount. Live contexts 6 → 1, dev and prod.
+- T2: lazy-loaded top-level pages and the three volumes; entry chunk 1,118 kB → 319 kB.
+- T3: mobile menu toggle gets an accessible name and `aria-expanded`; new `scripts/site viewport`; `nav-mobile` recipe.
+- Post-merge smoke green. Results and lessons in `docs/verification/phase-5-trial.md`.
