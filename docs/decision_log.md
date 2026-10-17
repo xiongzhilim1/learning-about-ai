@@ -152,3 +152,17 @@ Format: **Decision** / **Why** / **Alternatives considered** / **Sean's call**
 - **Why**: Sean found editorial the cleanest and crispest of the three prototypes. The gallery's "show the work" teaser and the instrument's scannable outcome row each address what hiring managers look for (#4) without bringing in the gallery's sparse chrome or the instrument's cold one-sheet feel.
 - **Alternatives**: Technical instrument as lead (rejected: rigorous but reads like a resume); work-first gallery as lead (borrowed only the teaser); text-only teasers (fallback only).
 - **Sean's call**: Approved. Whether to restyle the courses is deferred to #8.
+
+## D-022: Verification harness is a repo CLI over Playwright + installed Chrome
+- **Date**: 2026-10-17
+- **Decision**: `scripts/site` drives a headless Google Chrome through `playwright-core` (devDependency; the CLI spawns Chrome itself and connects over CDP). Each run gets its own vite port, Chrome profile and CDP port. Run state in `.verify/runs/`, evidence in `.verify/evidence/` (both gitignored). `.gitignore` now ignores `.claude/*` but keeps `.claude/skills/` so verify skills live in the repo.
+- **Why**: Named short commands make common moves cheap and repeatable, and they log trigger→result for every step, which the proof bar needs. A persistent per-run Chrome keeps in-app state across commands and lets two verifiers run side by side. `playwright-core` with the installed Chrome avoids a browser download and adds no runtime/server dependency.
+- **Alternatives**: Playwright MCP only (no per-run isolation, no command log, not scriptable by later phases); full `playwright` package (downloads browsers); Puppeteer (no gain).
+- **Sean's call**: Approved playwright-core and the hook (2026-10-17).
+
+## D-023: `window.__brain` lives in CanvasDirector, dev-only
+- **Date**: 2026-10-17
+- **Decision**: The canvas debug hook is a read-only getter on `window.__brain`, set in `CanvasDirector` behind `import.meta.env.DEV`, removed on unmount. Exposes beat, nodes, frames since mount, camera, renderer.info.
+- **Why**: CanvasDirector is the only module allowed to write to the scene (rule 3), so it is the one place that knows scene state. The DEV guard keeps it out of production bundles (verified by grep of `dist/`).
+- **Alternatives**: Hook in BrainMesh (knows nodes, not camera/renderer); data attributes on the canvas wrapper (forces re-renders, leaks debug state into prod DOM).
+- **Sean's call**: Approved (2026-10-17).

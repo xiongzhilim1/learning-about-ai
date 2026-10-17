@@ -109,4 +109,8 @@ temp/
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
 .vercel
-.claude/
+.claude/*
+!.claude/skills/
+
+# Verification runs and evidence (scripts/site)
+.verify/

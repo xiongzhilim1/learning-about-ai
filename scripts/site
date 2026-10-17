@@ -1,0 +1,344 @@
+#!/usr/bin/env node
+// Verification CLI: one isolated vite + headless Chrome per run, driven via Playwright over CDP.
+// Usage is printed by `scripts/site help`. The verify skill lives in .claude/skills/verify-learning-about-ai/.
+import { spawn, execFileSync } from "node:child_process";
+import fs from "node:fs";
+import net from "node:net";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { chromium } from "playwright-core";
+
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const RUNS = path.join(REPO, ".verify", "runs");
+const EVIDENCE = path.join(REPO, ".verify", "evidence");
+const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+
+const USAGE = `scripts/site <command> [args]
+
+Run lifecycle (each run = own vite port, own Chrome profile + CDP port, own evidence dir):
+  launch [--run ID]              start vite + headless Chrome; prints "export SITE_RUN=<id>"
+  doctor                         read-only health check of the selected run
+  stop                           kill only this run's processes; evidence is kept
+
+Hands and eyes (operate on the run's single tab):
+  open <path>                    navigate, wait for load; prints url, title, console errors
+  click <role> <name|/regex/>    click by ARIA role + accessible name
+  expect-text <text|/regex/> [--absent] [--timeout ms]
+                                 wait for visible text (or its absence); exit 1 on failure
+  page-state                     url, title, viewport
+  screenshot <name> [--full]     PNG into the evidence dir
+  snapshot <name>                ARIA snapshot (YAML) of the page into the evidence dir
+
+Canvas instruments (BrainMesh pages only: /digital-brain, /design):
+  brain-state [--save name]      canvas + WebGL2 + window.__brain.state
+  cpu-trace <seconds> [--scroll] Chrome trace (open in Perfetto / DevTools); prints frame delta
+  heap-snapshot <name>           GC, then .heapsnapshot + JS heap used
+
+Run selection: SITE_RUN=<id>, else the only live run. Evidence: .verify/evidence/<id>/
+Every command appends "trigger -> result" to .verify/evidence/<id>/commands.log.`;
+
+const [cmd, ...args] = process.argv.slice(2);
+const flag = (name) => args.includes(name);
+const opt = (name, dflt) => {
+  const i = args.indexOf(name);
+  return i >= 0 ? args[i + 1] : dflt;
+};
+const positional = args.filter((a, i) => !a.startsWith("--") && !(i > 0 && args[i - 1].startsWith("--") && ["--run", "--timeout", "--save"].includes(args[i - 1])));
+
+const alive = (pid) => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+};
+const freePort = () =>
+  new Promise((res) => {
+    const s = net.createServer().listen(0, "127.0.0.1", () => {
+      const { port } = s.address();
+      s.close(() => res(port));
+    });
+  });
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const toName = (s) => (s.startsWith("/") && s.lastIndexOf("/") > 0 ? new RegExp(s.slice(1, s.lastIndexOf("/")), s.slice(s.lastIndexOf("/") + 1)) : s);
+
+function liveRuns() {
+  if (!fs.existsSync(RUNS)) return [];
+  return fs
+    .readdirSync(RUNS)
+    .map((id) => path.join(RUNS, id, "state.json"))
+    .filter((f) => fs.existsSync(f))
+    .map((f) => JSON.parse(fs.readFileSync(f, "utf8")))
+    .filter((s) => alive(s.vitePid));
+}
+
+function selectRun() {
+  const runs = liveRuns();
+  if (process.env.SITE_RUN) {
+    const r = runs.find((s) => s.run === process.env.SITE_RUN);
+    if (!r) die(`run ${process.env.SITE_RUN} is not live (live: ${runs.map((s) => s.run).join(", ") || "none"})`);
+    return r;
+  }
+  if (runs.length === 1) return runs[0];
+  die(runs.length ? `several live runs (${runs.map((s) => s.run).join(", ")}); set SITE_RUN` : "no live run; scripts/site launch");
+}
+
+function die(msg) {
+  console.error(msg);
+  process.exit(1);
+}
+
+function record(run, line) {
+  fs.mkdirSync(path.join(EVIDENCE, run.run), { recursive: true });
+  fs.appendFileSync(path.join(EVIDENCE, run.run, "commands.log"), `${new Date().toISOString()}  ${line}\n`);
+}
+
+async function withPage(run, fn) {
+  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${run.cdpPort}`);
+  try {
+    const ctx = browser.contexts()[0];
+    const page = ctx.pages()[0] ?? (await ctx.newPage());
+    return await fn(page, ctx);
+  } finally {
+    await browser.close(); // disconnects only; the run's Chrome keeps running
+  }
+}
+
+async function launch() {
+  const run = opt("--run", new Date().toISOString().replace(/[-:]/g, "").replace("T", "-").slice(0, 15));
+  const dir = path.join(RUNS, run);
+  if (fs.existsSync(path.join(dir, "state.json"))) die(`run ${run} already exists`);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.mkdirSync(path.join(EVIDENCE, run), { recursive: true });
+  const [vitePort, cdpPort] = [await freePort(), await freePort()];
+  const url = `http://127.0.0.1:${vitePort}`;
+
+  const viteLog = fs.openSync(path.join(dir, "vite.log"), "a");
+  const vite = spawn(path.join(REPO, "node_modules/.bin/vite"), ["--host", "127.0.0.1", "--port", String(vitePort), "--strictPort"], {
+    cwd: REPO,
+    detached: true,
+    stdio: ["ignore", viteLog, viteLog],
+  });
+  vite.unref();
+  const chrome = spawn(
+    CHROME,
+    ["--headless=new", `--remote-debugging-port=${cdpPort}`, `--user-data-dir=${path.join(dir, "chrome")}`, "--window-size=1280,900", "--no-first-run", "--no-default-browser-check", "--enable-unsafe-swiftshader", "--disable-features=BackForwardCache", "about:blank"],
+    { detached: true, stdio: "ignore" },
+  );
+  chrome.unref();
+  const state = { run, url, vitePort, vitePid: vite.pid, cdpPort, chromePid: chrome.pid, startedAt: new Date().toISOString(), commit: git("rev-parse", "--short", "HEAD") };
+  fs.writeFileSync(path.join(dir, "state.json"), JSON.stringify(state, null, 2));
+
+  // Ready means usable: the app entry transforms and Chrome answers CDP.
+  for (let i = 0; i < 60; i++) {
+    const viteOk = await fetch(`${url}/src/main.tsx`).then((r) => r.ok).catch(() => false);
+    const cdpOk = await fetch(`http://127.0.0.1:${cdpPort}/json/version`).then((r) => r.ok).catch(() => false);
+    if (viteOk && cdpOk) {
+      record(state, `launch -> ready ${url} cdp:${cdpPort} commit:${state.commit}`);
+      console.log(`ready: ${url}  (vite pid ${vite.pid}, chrome pid ${chrome.pid}, cdp ${cdpPort})`);
+      console.log(`evidence: ${path.join(EVIDENCE, run)}`);
+      console.log(`export SITE_RUN=${run}`);
+      return;
+    }
+    if (!alive(vite.pid)) die(`vite exited:\n${fs.readFileSync(path.join(dir, "vite.log"), "utf8")}`);
+    await sleep(500);
+  }
+  die(`not ready after 30s; see ${path.join(dir, "vite.log")} (run scripts/site stop with SITE_RUN=${run})`);
+}
+
+function git(...a) {
+  return execFileSync("git", ["-C", REPO, ...a], { encoding: "utf8" }).trim();
+}
+
+async function doctor(run) {
+  const checks = [];
+  const check = (ok, label) => checks.push(`${ok ? "ok  " : "FAIL"} ${label}`) && ok;
+  check(alive(run.vitePid), `vite pid ${run.vitePid} alive`);
+  let listener = "";
+  try {
+    listener = execFileSync("lsof", ["-nP", `-iTCP:${run.vitePort}`, "-sTCP:LISTEN", "-t"], { encoding: "utf8" }).trim().split("\n")[0];
+  } catch {}
+  check(listener === String(run.vitePid), `port ${run.vitePort} owned by this run's vite (listener: ${listener || "none"})`);
+  let cwd = "";
+  try {
+    cwd = execFileSync("lsof", ["-a", "-p", String(run.vitePid), "-d", "cwd", "-Fn"], { encoding: "utf8" }).split("\n").find((l) => l.startsWith("n"))?.slice(1) ?? "";
+  } catch {}
+  check(cwd === REPO, `vite serves this checkout (${cwd || "unknown"})`);
+  const index = await fetch(`${run.url}/`).then((r) => r.text()).catch(() => "");
+  check(index.includes('<div id="root">'), "index.html served");
+  check(await fetch(`${run.url}/src/main.tsx`).then((r) => r.ok).catch(() => false), "/src/main.tsx transforms");
+  const deep = await fetch(`${run.url}/ai/context-engineering/selector`).then((r) => r.text()).catch(() => "");
+  check(deep.includes('<div id="root">'), "deep link falls back to index.html");
+  check(alive(run.chromePid) && (await fetch(`http://127.0.0.1:${run.cdpPort}/json/version`).then((r) => r.ok).catch(() => false)), `chrome pid ${run.chromePid} answers CDP on ${run.cdpPort}`);
+  const head = git("rev-parse", "--short", "HEAD");
+  const dirty = git("status", "--porcelain", "--untracked-files=no") ? " (dirty: uncommitted changes are being served)" : "";
+  checks.push(`info commit ${head}${dirty}; launched at ${run.commit}`);
+  checks.push(`info run ${run.run}  url ${run.url}  evidence ${path.join(EVIDENCE, run.run)}`);
+  console.log(checks.join("\n"));
+  const failed = checks.some((c) => c.startsWith("FAIL"));
+  record(run, `doctor -> ${failed ? "FAIL" : "ok"} commit:${head}${dirty ? " dirty" : ""}`);
+  if (failed) process.exit(1);
+}
+
+async function main() {
+  if (!cmd || cmd === "help" || cmd === "--help") return console.log(USAGE);
+  if (cmd === "launch") return launch();
+  const run = selectRun();
+
+  switch (cmd) {
+    case "doctor":
+      return doctor(run);
+
+    case "stop": {
+      for (const pid of [run.chromePid, run.vitePid]) if (alive(pid)) process.kill(pid);
+      record(run, "stop -> killed this run's vite + chrome");
+      await sleep(500);
+      fs.rmSync(path.join(RUNS, run.run), { recursive: true, force: true });
+      console.log(`stopped run ${run.run}; evidence kept at ${path.join(EVIDENCE, run.run)}`);
+      return;
+    }
+
+    case "open": {
+      const target = positional[0] ?? "/";
+      return withPage(run, async (page) => {
+        const errors = [];
+        // favicon.ico 404s on every page (no favicon shipped); everything else counts.
+        page.on("console", (m) => m.type() === "error" && !m.location().url.endsWith("/favicon.ico") && errors.push(`${m.text()} @ ${m.location().url}`));
+        page.on("pageerror", (e) => errors.push(e.message));
+        await page.goto(run.url + target, { waitUntil: "load" });
+        await page.waitForLoadState("networkidle").catch(() => {});
+        const out = `url ${page.url().replace(run.url, "")}  title "${await page.title()}"  console-errors ${errors.length}`;
+        console.log(out + (errors.length ? "\n  " + errors.join("\n  ") : ""));
+        record(run, `open ${target} -> ${out}`);
+      });
+    }
+
+    case "click": {
+      const [role, name] = positional;
+      if (!role || !name) die("usage: click <role> <name|/regex/>");
+      return withPage(run, async (page) => {
+        const loc = page.getByRole(role, { name: toName(name), exact: !name.startsWith("/") });
+        const n = await loc.count();
+        if (n !== 1) {
+          record(run, `click ${role} "${name}" -> FAIL matched ${n}`);
+          die(`click: ${role} "${name}" matched ${n} elements (need exactly 1)`);
+        }
+        await loc.click();
+        await page.waitForTimeout(150);
+        const out = `clicked ${role} "${name}"  url ${page.url().replace(run.url, "")}`;
+        console.log(out);
+        record(run, `click ${role} "${name}" -> ${out}`);
+      });
+    }
+
+    case "expect-text": {
+      const text = positional[0];
+      if (!text) die("usage: expect-text <text|/regex/> [--absent]");
+      const timeout = Number(opt("--timeout", 5000));
+      return withPage(run, async (page) => {
+        const loc = page.getByText(toName(text), { exact: false }).filter({ visible: true }).first();
+        const absent = flag("--absent");
+        const ok = await loc
+          .waitFor({ state: absent ? "detached" : "visible", timeout })
+          .then(() => true)
+          .catch(async () => absent && (await page.getByText(toName(text)).filter({ visible: true }).count()) === 0);
+        const out = `${ok ? "PASS" : "FAIL"} text ${absent ? "absent" : "visible"}: ${text}`;
+        console.log(out);
+        record(run, `expect-text ${text}${absent ? " --absent" : ""} -> ${out}`);
+        if (!ok) process.exit(1);
+      });
+    }
+
+    case "page-state":
+      return withPage(run, async (page) => {
+        const out = `url ${page.url().replace(run.url, "")}  title "${await page.title()}"  viewport ${JSON.stringify(page.viewportSize() ?? (await page.evaluate(() => ({ width: innerWidth, height: innerHeight }))))}`;
+        console.log(out);
+        record(run, `page-state -> ${out}`);
+      });
+
+    case "screenshot":
+    case "snapshot": {
+      const name = positional[0];
+      if (!name) die(`usage: ${cmd} <name>`);
+      return withPage(run, async (page) => {
+        const file = path.join(EVIDENCE, run.run, cmd === "screenshot" ? `${name}.png` : `${name}.aria.yml`);
+        if (cmd === "screenshot") await page.screenshot({ path: file, fullPage: flag("--full") });
+        else fs.writeFileSync(file, `# ${page.url()}  "${await page.title()}"\n${await page.locator("body").ariaSnapshot()}\n`);
+        console.log(file);
+        record(run, `${cmd} ${name} -> ${path.relative(REPO, file)}`);
+      });
+    }
+
+    case "brain-state":
+      return withPage(run, async (page) => {
+        const s = await brainState(page);
+        const json = JSON.stringify(s, null, 2);
+        console.log(json);
+        const save = opt("--save");
+        if (save) fs.writeFileSync(path.join(EVIDENCE, run.run, `${save}.brain.json`), json + "\n");
+        record(run, `brain-state -> canvas:${s.canvas} webgl2:${s.webgl2} hook:${s.hook} frames:${s.state?.frames ?? "-"}${save ? ` saved ${save}.brain.json` : ""}`);
+      });
+
+    case "cpu-trace": {
+      const seconds = Number(positional[0] ?? 3);
+      return withPage(run, async (page) => {
+        const before = await brainState(page);
+        if (!before.canvas) die("cpu-trace: no BrainMesh canvas on this page (open /digital-brain or /design first)");
+        const name = `cpu-trace-${Date.now()}`;
+        const file = path.join(EVIDENCE, run.run, `${name}.json`);
+        await page.context().browser().startTracing(page, { path: file, categories: ["devtools.timeline", "disabled-by-default-devtools.timeline.frame", "gpu", "v8.execute"] });
+        const t0 = Date.now();
+        if (flag("--scroll")) {
+          while (Date.now() - t0 < seconds * 1000) {
+            await page.mouse.wheel(0, 400);
+            await page.waitForTimeout(100);
+          }
+        } else await page.waitForTimeout(seconds * 1000);
+        await page.context().browser().stopTracing();
+        const after = await brainState(page);
+        const out = `${path.relative(REPO, file)}  ${seconds}s${flag("--scroll") ? " scrolling" : " idle"}  brain frames ${before.state?.frames ?? "?"} -> ${after.state?.frames ?? "?"}  draw calls ${after.state?.renderer.calls ?? "?"}`;
+        console.log(out);
+        record(run, `cpu-trace ${seconds}${flag("--scroll") ? " --scroll" : ""} -> ${out}`);
+      });
+    }
+
+    case "heap-snapshot": {
+      const name = positional[0];
+      if (!name) die("usage: heap-snapshot <name>");
+      return withPage(run, async (page) => {
+        const s = await brainState(page);
+        if (!s.canvas) die("heap-snapshot: no BrainMesh canvas on this page (open /digital-brain or /design first)");
+        const cdp = await page.context().newCDPSession(page);
+        await cdp.send("HeapProfiler.enable");
+        await cdp.send("HeapProfiler.collectGarbage");
+        const { usedSize } = await cdp.send("Runtime.getHeapUsage");
+        const file = path.join(EVIDENCE, run.run, `${name}.heapsnapshot`);
+        const out = fs.createWriteStream(file);
+        cdp.on("HeapProfiler.addHeapSnapshotChunk", ({ chunk }) => out.write(chunk));
+        await cdp.send("HeapProfiler.takeHeapSnapshot", { reportProgress: false });
+        await new Promise((r) => out.end(r));
+        const line = `${path.relative(REPO, file)}  js-heap-used ${(usedSize / 1e6).toFixed(1)}MB  geometries ${s.state?.renderer.geometries ?? "?"}  textures ${s.state?.renderer.textures ?? "?"}`;
+        console.log(line);
+        record(run, `heap-snapshot ${name} -> ${line}`);
+      });
+    }
+
+    default:
+      die(`unknown command: ${cmd}\n\n${USAGE}`);
+  }
+}
+
+async function brainState(page) {
+  return page.evaluate(() => {
+    const canvas = document.querySelectorAll("canvas").length;
+    let webgl2 = false;
+    try {
+      webgl2 = !!document.createElement("canvas").getContext("webgl2");
+    } catch {}
+    const b = window.__brain;
+    return { canvas, webgl2, hook: !!b, state: b ? b.state : null };
+  });
+}
+
+main().catch((e) => die(e.stack ?? String(e)));

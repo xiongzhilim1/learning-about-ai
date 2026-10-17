@@ -164,3 +164,13 @@ Next: step 5 — `FixedCanvas` + empty `CanvasDirector`, verify chunk-split and 
 - Nine child tickets (#3 to #11) with native blocking. Research ticket #4 dispatched to a background agent.
 - Resolved Positioning (#3): strategist who builds, claim on encoded judgment, lead audience deployment-role hiring managers. Added CONTEXT.md glossary.
 - Resolved Design direction (#10): editorial print base, image-led teasers with text fallback, one outcome block per case study, sage and Fira Code dropped from portfolio pages. Logged D-021. Course restyle question passed to Fate of the courses (#8). Added Teaser and Outcome block to CONTEXT.md.
+
+### 2026-10-17 — Verification Phase 1: verify skill + feature map
+
+- Wrote `docs/verification/phase-1.md` (interview findings, feature areas, done criteria) per the verifier playbook, Phase 1.
+- Added `scripts/site` (Playwright-over-CDP CLI: launch/doctor/stop, open/click/expect-text/page-state/snapshot/screenshot, brain-state/cpu-trace/heap-snapshot). One vite port + headless Chrome profile per run; evidence in gitignored `.verify/evidence/<run>/`.
+- Added `.claude/skills/verify-learning-about-ai/` (SKILL.md with proof bar and judge rule) and a five-file feature map: site-navigation, approach-selector, exercise-library, practitioner-checklist, digital-brain.
+- Committed dev-only `window.__brain` hook in CanvasDirector (636726d); confirmed absent from the prod bundle.
+- Executed end to end once (run 20261017-143636): launch → doctor → approach-selector (result, reset, back, back-subtracts, deep-dive) → canvas mount, rest budget, leak cycle → stop. Evidence survived cleanup.
+- Finding: each /digital-brain mount retains a WebGL renderer/context (1 → 6 after 5 in-app round trips), reproduced on the prod build without the hook. Logged to todo; not fixed.
+- Finding: port 5173 is held by a vite from another checkout (orca proto-editorial); doctor now checks port ownership and server cwd.

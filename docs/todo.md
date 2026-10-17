@@ -11,6 +11,7 @@ Persistent backlog for the project. Checked items stay for history. Organized by
 
 ## High impact, low effort
 
+- [ ] Fix WebGL renderer/context retained per /digital-brain mount (1 → 6 after 5 in-app round trips, prod too). Evidence: `.verify/evidence/20261017-143636/db-leak-finding.md`; recipe: verify skill `features/digital-brain.md` → db-canvas-leak
 - [x] Add OG meta tags for social sharing (#4)
 - [x] Fix breadcrumb on section home page (#7) — verified already correct
 - [ ] Add `vercel.json` SPA rewrite rule — done, but verify after deploy
