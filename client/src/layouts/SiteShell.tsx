@@ -91,6 +91,8 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           <button
             className="md:hidden p-2 rounded-lg"
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
             style={{ color: "#4A453E" }}
           >
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
