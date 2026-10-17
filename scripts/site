@@ -32,8 +32,9 @@ Hands and eyes (operate on the run's single tab):
   snapshot <name>                ARIA snapshot (YAML) of the page into the evidence dir
 
 Canvas instruments (BrainMesh pages only: /digital-brain, /design):
-  brain-state [--save name] [--expect-frames N]
-                                 canvas + WebGL2 + window.__brain.state; exit 1 if frames != N
+  brain-state [--save name] [--expect-frames N] [--expect-contexts N]
+                                 canvas + WebGL2 + window.__brain.state + live WebGL2 contexts (after GC);
+                                 exit 1 if frames != N or live contexts != N
   cpu-trace <seconds> [--scroll] [--expect-rest]
                                  Chrome trace (open in Perfetto / DevTools); prints frame delta;
                                  --expect-rest exits 1 if any frame rendered during the trace
@@ -48,7 +49,7 @@ const opt = (name, dflt) => {
   const i = args.indexOf(name);
   return i >= 0 ? args[i + 1] : dflt;
 };
-const positional = args.filter((a, i) => !a.startsWith("--") && !(i > 0 && ["--run", "--timeout", "--save", "--expect-frames"].includes(args[i - 1])));
+const positional = args.filter((a, i) => !a.startsWith("--") && !(i > 0 && ["--run", "--timeout", "--save", "--expect-frames", "--expect-contexts"].includes(args[i - 1])));
 
 const alive = (pid) => {
   try {
@@ -297,10 +298,14 @@ async function main() {
         console.log(json);
         const save = opt("--save");
         if (save) fs.writeFileSync(path.join(EVIDENCE, run.run, `${save}.brain.json`), json + "\n");
-        const want = opt("--expect-frames");
-        const verdict = want === undefined ? "" : s.state?.frames === Number(want) ? `  PASS frames == ${want}` : `  FAIL frames ${s.state?.frames ?? "-"} != ${want}`;
+        const checks = [];
+        const wantFrames = opt("--expect-frames");
+        if (wantFrames !== undefined) checks.push(s.state?.frames === Number(wantFrames) ? `PASS frames == ${wantFrames}` : `FAIL frames ${s.state?.frames ?? "-"} != ${wantFrames}`);
+        const wantCtx = opt("--expect-contexts");
+        if (wantCtx !== undefined) checks.push(s.liveWebGLContexts === Number(wantCtx) ? `PASS live contexts == ${wantCtx}` : `FAIL live contexts ${s.liveWebGLContexts} != ${wantCtx}`);
+        const verdict = checks.length ? `  ${checks.join("  ")}` : "";
         if (verdict) console.log(verdict.trim());
-        record(run, `brain-state -> canvas:${s.canvas} webgl2:${s.webgl2} hook:${s.hook} frames:${s.state?.frames ?? "-"}${save ? ` saved ${save}.brain.json` : ""}${verdict}`);
+        record(run, `brain-state -> canvas:${s.canvas} webgl2:${s.webgl2} hook:${s.hook} frames:${s.state?.frames ?? "-"} live-contexts:${s.liveWebGLContexts}${save ? ` saved ${save}.brain.json` : ""}${verdict}`);
         if (verdict.includes("FAIL")) process.exit(1);
       });
 
@@ -356,8 +361,22 @@ async function main() {
   }
 }
 
+// Live WebGL2 contexts in the page heap after a forced GC. Each mounted R3F canvas holds one;
+// the FixedCanvas gate's probe holds a transient one. A count that grows per mount is a leak.
+async function liveContexts(page) {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("HeapProfiler.enable");
+  await cdp.send("HeapProfiler.collectGarbage");
+  const proto = await cdp.send("Runtime.evaluate", { expression: "WebGL2RenderingContext.prototype" });
+  const { objects } = await cdp.send("Runtime.queryObjects", { prototypeObjectId: proto.result.objectId });
+  const { result } = await cdp.send("Runtime.callFunctionOn", { objectId: objects.objectId, functionDeclaration: "function () { return this.length; }", returnByValue: true });
+  await cdp.detach();
+  return result.value;
+}
+
 async function brainState(page) {
-  return page.evaluate(() => {
+  const contexts = await liveContexts(page);
+  const s = await page.evaluate(() => {
     const canvas = document.querySelectorAll("canvas").length;
     let webgl2 = false;
     try {
@@ -366,6 +385,7 @@ async function brainState(page) {
     const b = window.__brain;
     return { canvas, webgl2, hook: !!b, state: b ? b.state : null };
   });
+  return { ...s, liveWebGLContexts: contexts };
 }
 
 main().catch((e) => die(e.stack ?? String(e)));
