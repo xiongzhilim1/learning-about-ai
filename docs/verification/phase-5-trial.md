@@ -35,10 +35,10 @@ Tasks were picked to be user-visible or measurable, small, independent (disjoint
 
 ## T2 · `code-split-routes`
 
-**Brief.** `npm run build` warns that the main JS chunk is over 500 kB (it holds all three course volumes plus the essay pages). Split by route so the initial chunk drops under the warning, using lazy-loaded route components with a minimal fallback. Keep wouter, keep the existing `CanvasScene` lazy chunk, and add no dependencies. Every route, redirect, deep link and the in-app 404 must keep working. Report chunk sizes before and after.
+**Brief.** `npm run build` warns about chunks over 500 kB. Baseline at `82ba85c`: `index-*.js` 1,117.77 kB (340 kB gz) holds all three course volumes plus the essay pages; `CanvasScene-*.js` 891.87 kB (240.5 kB gz) is three.js, already lazy, and within its spec budget (< 250 kB gz). Split by route so the **entry chunk** drops under 500 kB, using lazy-loaded route components with a minimal fallback. Keep wouter, keep the existing `CanvasScene` lazy chunk, and add no dependencies. Every route, redirect, deep link and the in-app 404 must keep working. Report chunk sizes before and after.
 
 **Acceptance (verifier).**
-- `npm run build` prints no "chunks are larger than 500 kB" warning. Record the chunk list.
+- In `npm run build` output, the entry chunk (`index-*.js`) is under 500 kB, and no chunk other than `CanvasScene-*.js` exceeds 500 kB. The warning may still print because of `CanvasScene`. That chunk is out of scope and must not have grown. `chunkSizeWarningLimit` must not be changed. Record the chunk list.
 - Full sweep of all feature files has no failures (routing is the blast radius: redirects, header, volumes, deep links, 404, sub-nav entries).
 - No console errors on any `open`.
 
