@@ -58,6 +58,8 @@ scripts/site expect-text "<text>"              # waits ≤5s for visible text; e
 scripts/site expect-text "<text>" --absent
 scripts/site expect-aria '/<regex>/'           # regex over the page's ARIA snapshot (multi-line); pins structure
 scripts/site page-state                        # url, title, viewport
+scripts/site viewport 390x844                  # phone viewport until `viewport reset` or `stop`
+scripts/site viewport reset                    # back to 1280x813
 scripts/site snapshot <name>                   # ARIA snapshot → <name>.aria.yml
 scripts/site screenshot <name> [--full]        # → <name>.png
 ```
@@ -66,6 +68,7 @@ scripts/site screenshot <name> [--full]        # → <name>.png
 - `click` fails if the name matches 0 or 2+ elements. Use an anchored regex to disambiguate. Never fall back to coordinates or nth-child.
 - The tab persists between commands (one Chrome per run), so in-app state survives across `click` calls. `open` is a full page load and resets all React state.
 - The Chrome window is 1280×900. The page viewport is 1280×813, which is what `page-state` reports. The width is what the canvas gate checks.
+- `viewport <W>x<H>` overrides that and the override persists across commands and reloads. Emulation dies with the CDP session that set it, so the command starts a small holder process (pid in `state.json`, killed by `reset` and `stop`) that keeps one session open. It returns only once the page reports the new size. `doctor` prints the current viewport. Always `viewport reset` before a desktop recipe.
 - Assert what you claim. `expect-text` proves only that the text is somewhere on the page. When the claim is about structure ("Classic RAG is first at 14/18"), use `expect-aria` with a regex that pins the value to its row. A number that appears anywhere is not a ranking.
 - zsh does not word-split variables. A loop over `"open /"` passes one argument. Write each command out, or use arrays. The 3D canvas gate needs >768px width and WebGL2. Both hold here.
 

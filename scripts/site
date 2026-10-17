@@ -28,6 +28,8 @@ Hands and eyes (operate on the run's single tab):
   expect-aria </regex/>          match the page's ARIA snapshot (multi-line) against a regex;
                                  use it to pin structure, e.g. "the line after X is Y"; exit 1 on failure
   page-state                     url, title, viewport
+  viewport <W>x<H> | reset       set the page viewport (e.g. 390x844) until reset or stop; it persists
+                                 across commands (a held CDP session keeps the override); reset = 1280x813
   screenshot <name> [--full]     PNG into the evidence dir
   snapshot <name>                ARIA snapshot (YAML) of the page into the evidence dir
 
@@ -182,6 +184,7 @@ async function doctor(run) {
   const dirty = changed ? ` dirty (${changed} uncommitted file${changed === 1 ? "" : "s"} being served)` : "";
   checks.push(`info commit ${head}; launched at ${run.commit}`);
   checks.push(`info tree ${changed ? dirty.trim() : "clean"}`);
+  checks.push(`info viewport ${run.holderPid && alive(run.holderPid) ? `${run.viewport} (held by pid ${run.holderPid})` : "default 1280x813"}`);
   checks.push(`info run ${run.run}  url ${run.url}  evidence ${path.join(EVIDENCE, run.run)}`);
   console.log(checks.join("\n"));
   const failed = checks.some((c) => c.startsWith("FAIL"));
@@ -189,17 +192,58 @@ async function doctor(run) {
   if (failed) process.exit(1);
 }
 
+// Emulation overrides die with the CDP session that set them, and every command disconnects.
+// So `viewport` spawns this holder: a detached process that keeps one session open with the override.
+// (Resizing the window would persist too, but headless Chrome clamps windows to >= 500px wide.)
+async function holdViewport(run, width, height) {
+  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${run.cdpPort}`);
+  browser.on("disconnected", () => process.exit(0));
+  const ctx = browser.contexts()[0];
+  const page = ctx.pages()[0] ?? (await ctx.newPage());
+  const cdp = await ctx.newCDPSession(page);
+  await cdp.send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: false });
+  setInterval(() => {}, 1 << 30);
+}
+
+async function viewport(run) {
+  const arg = positional[0];
+  const m = /^(\d+)x(\d+)$/.exec(arg ?? "");
+  if (arg !== "reset" && !m) die("usage: viewport <W>x<H> | reset");
+  if (run.holderPid && alive(run.holderPid)) process.kill(run.holderPid);
+  const want = m ? { width: Number(m[1]), height: Number(m[2]) } : { width: 1280, height: 813 };
+  const stateFile = path.join(RUNS, run.run, "state.json");
+  const next = { ...run, holderPid: undefined, viewport: undefined };
+  if (m) {
+    const holder = spawn(process.execPath, [fileURLToPath(import.meta.url), "_hold-viewport", m[1], m[2]], { detached: true, stdio: "ignore", env: { ...process.env, SITE_RUN: run.run } });
+    holder.unref();
+    Object.assign(next, { holderPid: holder.pid, viewport: arg });
+  }
+  fs.writeFileSync(stateFile, JSON.stringify(next, null, 2));
+  let got;
+  for (let i = 0; i < 25; i++) {
+    got = await withPage(run, (page) => page.evaluate(() => ({ width: innerWidth, height: innerHeight })));
+    if (got.width === want.width && got.height === want.height) break;
+    await sleep(200);
+  }
+  const ok = got.width === want.width && got.height === want.height;
+  const out = `${ok ? "ok" : "FAIL"} viewport ${JSON.stringify(got)}${m ? ` held by pid ${next.holderPid}` : " (default)"}`;
+  console.log(out);
+  record(run, `viewport ${arg} -> ${out}`);
+  if (!ok) process.exit(1);
+}
+
 async function main() {
   if (!cmd || cmd === "help" || cmd === "--help") return console.log(USAGE);
   if (cmd === "launch") return launch();
   const run = selectRun();
+  if (cmd === "_hold-viewport") return holdViewport(run, Number(positional[0]), Number(positional[1]));
 
   switch (cmd) {
     case "doctor":
       return doctor(run);
 
     case "stop": {
-      for (const pid of [run.chromePid, run.vitePid]) if (alive(pid)) process.kill(pid);
+      for (const pid of [run.holderPid, run.chromePid, run.vitePid]) if (pid && alive(pid)) process.kill(pid);
       record(run, "stop -> killed this run's vite + chrome");
       await sleep(500);
       fs.rmSync(path.join(RUNS, run.run), { recursive: true, force: true });
@@ -277,6 +321,9 @@ async function main() {
         console.log(out);
         record(run, `page-state -> ${out}`);
       });
+
+    case "viewport":
+      return viewport(run);
 
     case "screenshot":
     case "snapshot": {
