@@ -1,14 +1,17 @@
+import { lazy, Suspense } from "react";
 import { Redirect, Route, Switch, Router } from "wouter";
 import SectionLayout from "@/layouts/SectionLayout";
-import PromptEngineeringRoutes from "./prompt-engineering/routes";
-import ContextEngineeringRoutes from "./context-engineering/routes";
-import HarnessEngineeringRoutes from "./harness-engineering/routes";
 import NotFound from "@/pages/NotFound";
+
+const PromptEngineeringRoutes = lazy(() => import("./prompt-engineering/routes"));
+const ContextEngineeringRoutes = lazy(() => import("./context-engineering/routes"));
+const HarnessEngineeringRoutes = lazy(() => import("./harness-engineering/routes"));
 
 export default function AiRoutes() {
   return (
     <Router base="/ai">
       <SectionLayout domainSlug="ai">
+        <Suspense fallback={null}>
         <Switch>
           <Route path="/">
             <Redirect to="/prompt-engineering" />
@@ -18,6 +21,7 @@ export default function AiRoutes() {
           <Route path="/harness-engineering/*?" component={HarnessEngineeringRoutes} />
           <Route component={NotFound} />
         </Switch>
+        </Suspense>
       </SectionLayout>
     </Router>
   );
