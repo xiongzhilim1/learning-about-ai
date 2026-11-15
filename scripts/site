@@ -167,7 +167,7 @@ async function launch() {
     const cdpOk = await fetch(`http://127.0.0.1:${cdpPort}/json/version`).then((r) => r.ok).catch(() => false);
     if (viteOk && cdpOk) {
       record(state, `launch${preview ? " --preview" : ""} -> ready ${url} cdp:${cdpPort} commit:${state.commit}${preview ? ` build:${build.seconds}s${build.changed ? ` dirty(${build.changed})` : ""}` : ""}`);
-      console.log(`ready: ${url}  (vite ${preview ? "preview" : "dev"} pid ${vite.pid}, chrome pid ${chrome.pid}, cdp ${cdpPort})`);
+      console.log(`ready: ${url}  (vite ${preview ? "preview " : ""}pid ${vite.pid}, chrome pid ${chrome.pid}, cdp ${cdpPort})`);
       console.log(`evidence: ${path.join(EVIDENCE, run)}`);
       console.log(`export SITE_RUN=${run}`);
       return;
@@ -395,7 +395,8 @@ async function main() {
         if (save) fs.writeFileSync(path.join(EVIDENCE, run.run, `${save}.brain.json`), json + "\n");
         const checks = [];
         const wantFrames = opt("--expect-frames");
-        if (wantFrames !== undefined) checks.push(s.state?.frames === Number(wantFrames) ? `PASS frames == ${wantFrames}` : `FAIL frames ${s.state?.frames ?? "-"} != ${wantFrames}`);
+        if (wantFrames !== undefined)
+          checks.push(!s.hook ? `FAIL frames unknown: no window.__brain (dev-only; production builds strip it)` : s.state.frames === Number(wantFrames) ? `PASS frames == ${wantFrames}` : `FAIL frames ${s.state.frames} != ${wantFrames}`);
         const wantCtx = opt("--expect-contexts");
         if (wantCtx !== undefined) checks.push(s.liveWebGLContexts === Number(wantCtx) ? `PASS live contexts == ${wantCtx}` : `FAIL live contexts ${s.liveWebGLContexts} != ${wantCtx}`);
         const verdict = checks.length ? `  ${checks.join("  ")}` : "";
@@ -422,7 +423,7 @@ async function main() {
         await page.context().browser().stopTracing();
         const after = await brainState(page);
         const rested = before.state && after.state && before.state.frames === after.state.frames;
-        const verdict = flag("--expect-rest") ? (rested ? "  PASS at rest" : "  FAIL frames rendered during trace") : "";
+        const verdict = !flag("--expect-rest") ? "" : !before.hook ? "  FAIL rest unknown: no window.__brain (dev-only; production builds strip it)" : rested ? "  PASS at rest" : "  FAIL frames rendered during trace";
         const out = `${path.relative(REPO, file)}  ${seconds}s${flag("--scroll") ? " scrolling" : " idle"}  brain frames ${before.state?.frames ?? "?"} -> ${after.state?.frames ?? "?"}  draw calls ${after.state?.renderer.calls ?? "?"}${verdict}`;
         console.log(out);
         record(run, `cpu-trace ${seconds}${flag("--scroll") ? " --scroll" : ""}${flag("--expect-rest") ? " --expect-rest" : ""} -> ${out}`);

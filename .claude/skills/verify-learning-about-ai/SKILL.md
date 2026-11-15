@@ -47,7 +47,7 @@ scripts/site launch --preview  # vite build into .verify/runs/<id>/dist, then vi
 - The build is `vite build` only (no `tsc`). It goes into the run dir, so it never touches the repo's `dist/` or another run's build. `stop` deletes it with the run.
 - The build is frozen at launch. Edits after launch are not served, and `doctor` FAILs `build matches the current tree` once HEAD or the uncommitted diff changes. Relaunch to pick them up.
 - Everything else (port, profile, evidence, `stop`) is the same as a dev run.
-- `window.__brain` does not exist in a production build, so `brain-state` reports `hook: false` and `--expect-frames` cannot pass. Run frame-budget recipes (`db-canvas-rest`, the mount frame count) on a dev run. `--expect-contexts`, `cpu-trace` and `heap-snapshot` work on both.
+- `window.__brain` does not exist in a production build, so `brain-state` reports `hook: false`, and `brain-state --expect-frames` and `cpu-trace --expect-rest` FAIL with "no window.__brain". That FAIL is about the instrument, not the app. Run frame-budget recipes (`db-canvas-mount` frame count, `db-canvas-rest`) on a dev run. `brain-state --expect-contexts`, the `cpu-trace` file itself and `heap-snapshot` work on both.
 
 ## Doctor
 
