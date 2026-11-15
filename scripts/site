@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// Verification CLI: one isolated vite + headless Chrome per run, driven via Playwright over CDP.
+// Verification CLI: one isolated vite (dev, or build + preview) + headless Chrome per run, driven via Playwright over CDP.
 // Usage is printed by `scripts/site help`. The verify skill lives in .claude/skills/verify-learning-about-ai/.
-import { spawn, execFileSync } from "node:child_process";
+import { spawn, spawnSync, execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
@@ -16,7 +17,9 @@ const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const USAGE = `scripts/site <command> [args]
 
 Run lifecycle (each run = own vite port, own Chrome profile + CDP port, own evidence dir):
-  launch [--run ID]              start vite + headless Chrome; prints "export SITE_RUN=<id>"
+  launch [--run ID] [--preview]  start vite + headless Chrome; prints "export SITE_RUN=<id>"
+                                 --preview: vite build into the run dir, then vite preview (production bundle,
+                                 code-split chunks, no dev-only hooks); the build is frozen at launch
   doctor                         read-only health check of the selected run
   stop                           kill only this run's processes; evidence is kept
 
@@ -31,6 +34,10 @@ Hands and eyes (operate on the run's single tab):
   viewport <W>x<H> | reset       set the page viewport (e.g. 390x844) until reset or stop; it persists
                                  across commands (a held CDP session keeps the override); reset = 1280x813
   screenshot <name> [--full]     PNG into the evidence dir
+  assets [--expect /regex/] [--absent] [--timeout ms] [--save name]
+                                 JS/CSS the current document fetched, each tagged initial (in index.html)
+                                 or lazy (fetched later); --expect waits for a lazy asset to match, exit 1
+                                 if none; with --absent, exit 1 if any loaded asset matches
   snapshot <name>                ARIA snapshot (YAML) of the page into the evidence dir
 
 Canvas instruments (BrainMesh pages only: /digital-brain, /design):
@@ -51,7 +58,7 @@ const opt = (name, dflt) => {
   const i = args.indexOf(name);
   return i >= 0 ? args[i + 1] : dflt;
 };
-const positional = args.filter((a, i) => !a.startsWith("--") && !(i > 0 && ["--run", "--timeout", "--save", "--expect-frames", "--expect-contexts"].includes(args[i - 1])));
+const positional = args.filter((a, i) => !a.startsWith("--") && !(i > 0 && ["--run", "--timeout", "--save", "--expect", "--expect-frames", "--expect-contexts"].includes(args[i - 1])));
 
 const alive = (pid) => {
   try {
@@ -122,8 +129,23 @@ async function launch() {
   const [vitePort, cdpPort] = [await freePort(), await freePort()];
   const url = `http://127.0.0.1:${vitePort}`;
 
+  const preview = flag("--preview");
+  const distDir = path.join(dir, "dist");
+  let build;
+  if (preview) {
+    build = { commit: git("rev-parse", "--short", "HEAD"), treeHash: treeHash(), changed: changedFiles() };
+    console.log(`building (vite build -> ${path.relative(REPO, distDir)}) ...`);
+    const t0 = Date.now();
+    const out = spawnSync(path.join(REPO, "node_modules/.bin/vite"), ["build", "--outDir", distDir, "--emptyOutDir"], { cwd: REPO, encoding: "utf8" });
+    fs.writeFileSync(path.join(dir, "build.log"), (out.stdout ?? "") + (out.stderr ?? ""));
+    if (out.status !== 0) die(`vite build failed:\n${fs.readFileSync(path.join(dir, "build.log"), "utf8")}`);
+    build.seconds = Math.round((Date.now() - t0) / 100) / 10;
+  }
+  const viteArgs = preview
+    ? ["preview", "--outDir", distDir, "--host", "127.0.0.1", "--port", String(vitePort), "--strictPort"]
+    : ["--host", "127.0.0.1", "--port", String(vitePort), "--strictPort"];
   const viteLog = fs.openSync(path.join(dir, "vite.log"), "a");
-  const vite = spawn(path.join(REPO, "node_modules/.bin/vite"), ["--host", "127.0.0.1", "--port", String(vitePort), "--strictPort"], {
+  const vite = spawn(path.join(REPO, "node_modules/.bin/vite"), viteArgs, {
     cwd: REPO,
     detached: true,
     stdio: ["ignore", viteLog, viteLog],
@@ -136,15 +158,16 @@ async function launch() {
   );
   chrome.unref();
   const state = { run, url, vitePort, vitePid: vite.pid, cdpPort, chromePid: chrome.pid, startedAt: new Date().toISOString(), commit: git("rev-parse", "--short", "HEAD") };
+  if (preview) Object.assign(state, { mode: "preview", distDir, build });
   fs.writeFileSync(path.join(dir, "state.json"), JSON.stringify(state, null, 2));
 
-  // Ready means usable: the app entry transforms and Chrome answers CDP.
+  // Ready means usable: the app entry transforms (dev) or the built entry chunk is served (preview), and Chrome answers CDP.
   for (let i = 0; i < 60; i++) {
-    const viteOk = await fetch(`${url}/src/main.tsx`).then((r) => r.ok).catch(() => false);
+    const viteOk = preview ? (await builtEntry(url)).ok : await fetch(`${url}/src/main.tsx`).then((r) => r.ok).catch(() => false);
     const cdpOk = await fetch(`http://127.0.0.1:${cdpPort}/json/version`).then((r) => r.ok).catch(() => false);
     if (viteOk && cdpOk) {
-      record(state, `launch -> ready ${url} cdp:${cdpPort} commit:${state.commit}`);
-      console.log(`ready: ${url}  (vite pid ${vite.pid}, chrome pid ${chrome.pid}, cdp ${cdpPort})`);
+      record(state, `launch${preview ? " --preview" : ""} -> ready ${url} cdp:${cdpPort} commit:${state.commit}${preview ? ` build:${build.seconds}s${build.changed ? ` dirty(${build.changed})` : ""}` : ""}`);
+      console.log(`ready: ${url}  (vite ${preview ? "preview" : "dev"} pid ${vite.pid}, chrome pid ${chrome.pid}, cdp ${cdpPort})`);
       console.log(`evidence: ${path.join(EVIDENCE, run)}`);
       console.log(`export SITE_RUN=${run}`);
       return;
@@ -157,6 +180,18 @@ async function launch() {
 
 function git(...a) {
   return execFileSync("git", ["-C", REPO, ...a], { encoding: "utf8" }).trim();
+}
+
+const changedFiles = () => git("status", "--porcelain", "--untracked-files=no").split("\n").filter(Boolean).length;
+const treeHash = () => createHash("sha1").update(git("rev-parse", "HEAD")).update(git("diff", "HEAD")).digest("hex").slice(0, 12);
+
+// The hashed entry chunk index.html points at, and whether the server returns it as JS.
+async function builtEntry(url) {
+  const html = await fetch(`${url}/`).then((r) => r.text()).catch(() => "");
+  const src = /<script[^>]+src="(\/assets\/index-[^"]+\.js)"/.exec(html)?.[1];
+  if (!src) return { ok: false };
+  const ok = await fetch(url + src).then((r) => r.ok && /javascript/.test(r.headers.get("content-type") ?? "")).catch(() => false);
+  return { ok, src };
 }
 
 async function doctor(run) {
@@ -175,20 +210,30 @@ async function doctor(run) {
   check(cwd === REPO, `vite serves this checkout (${cwd || "unknown"})`);
   const index = await fetch(`${run.url}/`).then((r) => r.text()).catch(() => "");
   check(index.includes('<div id="root">'), "index.html served");
-  check(await fetch(`${run.url}/src/main.tsx`).then((r) => r.ok).catch(() => false), "/src/main.tsx transforms");
+  if (run.mode === "preview") {
+    const entry = await builtEntry(run.url);
+    check(entry.ok, `production bundle served (entry ${entry.src ?? "none"})`);
+    const src = await fetch(`${run.url}/src/main.tsx`).then((r) => r.headers.get("content-type") ?? "").catch(() => "");
+    check(!/javascript/.test(src), `preview server, not dev (/src/main.tsx not served as a module: ${src || "no response"})`);
+  } else check(await fetch(`${run.url}/src/main.tsx`).then((r) => r.ok).catch(() => false), "/src/main.tsx transforms");
   const deep = await fetch(`${run.url}/ai/context-engineering/selector`).then((r) => r.text()).catch(() => "");
   check(deep.includes('<div id="root">'), "deep link falls back to index.html");
   check(alive(run.chromePid) && (await fetch(`http://127.0.0.1:${run.cdpPort}/json/version`).then((r) => r.ok).catch(() => false)), `chrome pid ${run.chromePid} answers CDP on ${run.cdpPort}`);
   const head = git("rev-parse", "--short", "HEAD");
-  const changed = git("status", "--porcelain", "--untracked-files=no").split("\n").filter(Boolean).length;
+  const changed = changedFiles();
   const dirty = changed ? ` dirty (${changed} uncommitted file${changed === 1 ? "" : "s"} being served)` : "";
+  if (run.mode === "preview") check(treeHash() === run.build.treeHash, "build matches the current tree (HEAD and uncommitted diff unchanged since launch)");
   checks.push(`info commit ${head}; launched at ${run.commit}`);
-  checks.push(`info tree ${changed ? dirty.trim() : "clean"}`);
+  if (run.mode === "preview") {
+    const b = run.build;
+    checks.push(`info mode preview (production build of ${b.commit}${b.changed ? ` + ${b.changed} uncommitted file${b.changed === 1 ? "" : "s"}` : ""}, built in ${b.seconds}s; edits after launch are not served)`);
+    checks.push(`info tree ${b.changed ? `dirty (${b.changed} uncommitted file${b.changed === 1 ? "" : "s"} in the build)` : "clean"}`);
+  } else checks.push(`info tree ${changed ? dirty.trim() : "clean"}`);
   checks.push(`info viewport ${run.holderPid && alive(run.holderPid) ? `${run.viewport} (held by pid ${run.holderPid})` : "default 1280x813"}`);
   checks.push(`info run ${run.run}  url ${run.url}  evidence ${path.join(EVIDENCE, run.run)}`);
   console.log(checks.join("\n"));
   const failed = checks.some((c) => c.startsWith("FAIL"));
-  record(run, `doctor -> ${failed ? "FAIL" : "ok"} commit:${head}${dirty ? " dirty" : ""}`);
+  record(run, `doctor -> ${failed ? "FAIL" : "ok"}${run.mode === "preview" ? " mode:preview" : ""} commit:${head}${(run.mode === "preview" ? run.build.changed : changed) ? " dirty" : ""}`);
   if (failed) process.exit(1);
 }
 
@@ -338,6 +383,9 @@ async function main() {
       });
     }
 
+    case "assets":
+      return assets(run);
+
     case "brain-state":
       return withPage(run, async (page) => {
         const s = await brainState(page);
@@ -406,6 +454,46 @@ async function main() {
     default:
       die(`unknown command: ${cmd}\n\n${USAGE}`);
   }
+}
+
+// Resource Timing is per document: in-app navigation keeps the list, `open` resets it.
+async function assets(run) {
+  const html = await fetch(`${run.url}/`).then((r) => r.text()).catch(() => "");
+  const initial = new Set([...html.matchAll(/(?:src|href)="([^"]+)"/g)].map((m) => m[1]));
+  const want = opt("--expect");
+  const re = want ? toName(want) : null;
+  if (want && !(re instanceof RegExp)) die("assets: --expect takes /regex/");
+  const absent = flag("--absent");
+  const timeout = Number(opt("--timeout", 5000));
+  return withPage(run, async (page) => {
+    const read = async () =>
+      (
+        await page.evaluate(() =>
+          performance
+            .getEntriesByType("resource")
+            .map((e) => ({ path: new URL(e.name).pathname, at: Math.round(e.startTime) }))
+            .filter((e) => /\.(m?js|tsx?|jsx|css)$/.test(e.path)),
+        )
+      ).map((e) => ({ ...e, load: initial.has(e.path) ? "initial" : "lazy" }));
+    const matches = (rows) => rows.filter((r) => re.test(r.path) && (absent || r.load === "lazy"));
+    let rows = await read();
+    for (const t0 = Date.now(); re && !absent && !matches(rows).length && Date.now() - t0 < timeout; rows = await read()) await sleep(200);
+    const lazy = rows.filter((r) => r.load === "lazy").length;
+    const summary = `url ${page.url().replace(run.url, "")}  ${rows.length} js/css (${rows.length - lazy} initial, ${lazy} lazy)  mode ${run.mode ?? "dev"}`;
+    console.log([summary, ...rows.map((r) => `  ${r.load.padEnd(7)} +${String(r.at).padStart(5)}ms  ${r.path}`)].join("\n"));
+    if (run.mode !== "preview") console.log("note: the dev server serves unbundled modules; built chunks exist only with launch --preview");
+    const save = opt("--save");
+    if (save) fs.writeFileSync(path.join(EVIDENCE, run.run, `${save}.assets.json`), JSON.stringify({ url: page.url(), mode: run.mode ?? "dev", assets: rows }, null, 2) + "\n");
+    let verdict = "";
+    if (re) {
+      const hits = matches(rows);
+      const ok = absent ? hits.length === 0 : hits.length > 0;
+      verdict = `${ok ? "PASS" : "FAIL"} ${absent ? "no loaded asset matches" : "lazy asset matches"} ${want}${hits.length ? `: ${hits.map((h) => h.path).join(", ")}` : ""}`;
+      console.log(verdict);
+    }
+    record(run, `assets${want ? ` --expect ${want}${absent ? " --absent" : ""}` : ""} -> ${summary}${save ? ` saved ${save}.assets.json` : ""}${verdict ? `  ${verdict}` : ""}`);
+    if (verdict.startsWith("FAIL")) process.exit(1);
+  });
 }
 
 // Live WebGL2 contexts in the page heap after a forced GC. Each mounted R3F canvas holds one;

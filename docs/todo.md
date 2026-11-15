@@ -52,7 +52,7 @@ Persistent backlog for the project. Checked items stay for history. Organized by
 
 ## Verification harness (from the Phase 5 trial)
 
-- [ ] `scripts/site launch --preview`: drive a production build (vite preview). Code-split and prod-only behavior is currently unverifiable through the harness
+- [x] `scripts/site launch --preview`: drive a production build (vite build + vite preview), plus `scripts/site assets` to see which chunks a page fetched lazily
 - [ ] `scripts/site back` (browser history) and console/page-error capture across in-app navigation (today `open` reports load-time errors only)
 - [ ] Viewport holder should carry the run id so the documented cleanup check (`grep [.]verify/runs/<id>`) sees it
 - [ ] Map `/design` (canvas review surface; reachable only by URL, so remounts need Back)

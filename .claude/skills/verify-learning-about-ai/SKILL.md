@@ -37,6 +37,18 @@ export SITE_RUN=<id printed by launch>
 - No env vars, seed data, or auth exist. If `node_modules` is missing, run `npm install` first.
 - Two verifiers can run side by side. Each must set its own `SITE_RUN`. With several live runs and no `SITE_RUN`, every command refuses to guess.
 
+### Production build (`--preview`)
+
+```bash
+scripts/site launch --preview  # vite build into .verify/runs/<id>/dist, then vite preview on the run's port
+```
+
+- Use it when the claim depends on production-only behavior: code-split chunks, minified output, `import.meta.env.DEV` code stripped. The dev server cannot show any of these.
+- The build is `vite build` only (no `tsc`). It goes into the run dir, so it never touches the repo's `dist/` or another run's build. `stop` deletes it with the run.
+- The build is frozen at launch. Edits after launch are not served, and `doctor` FAILs `build matches the current tree` once HEAD or the uncommitted diff changes. Relaunch to pick them up.
+- Everything else (port, profile, evidence, `stop`) is the same as a dev run.
+- `window.__brain` does not exist in a production build, so `brain-state` reports `hook: false` and `--expect-frames` cannot pass. Run frame-budget recipes (`db-canvas-rest`, the mount frame count) on a dev run. `--expect-contexts`, `cpu-trace` and `heap-snapshot` work on both.
+
 ## Doctor
 
 ```bash
@@ -45,6 +57,8 @@ scripts/site doctor
 
 Read-only. Run it first, and again whenever anything looks off. All of these must be `ok`:
 vite pid alive · port owned by that pid · vite cwd is this repo · index served · `main.tsx` transforms · deep link falls back to index · Chrome answers CDP. It also prints the commit and always one tree line: `info tree clean` or `info tree dirty (N uncommitted files being served)`.
+
+On a `--preview` run, `main.tsx transforms` is replaced by `production bundle served (entry /assets/index-<hash>.js)` and `preview server, not dev`, plus `build matches the current tree`. It prints `info mode preview (production build of <commit> ...)`, and the tree line describes the tree at build time. A dev run prints no mode line.
 
 Never drive port 5173 or any server this run did not start. On this machine 5173 has been held by a vite from a different checkout (`~/orca/workspaces/...`), which serves different code.
 
@@ -62,7 +76,13 @@ scripts/site viewport 390x844                  # phone viewport until `viewport 
 scripts/site viewport reset                    # back to 1280x813
 scripts/site snapshot <name>                   # ARIA snapshot → <name>.aria.yml
 scripts/site screenshot <name> [--full]        # → <name>.png
+scripts/site assets [--save <name>]            # JS/CSS this document fetched, tagged initial / lazy
+scripts/site assets --expect '/<regex>/'       # waits ≤5s for a lazy asset to match; exit 1 if none
+scripts/site assets --expect '/<regex>/' --absent   # exit 1 if any loaded asset matches
 ```
+
+- `assets` reads the page's Resource Timing list: what the current document actually fetched, with ms since navigation. `initial` means index.html references it, `lazy` means it was fetched later. `open` starts a new list, in-app `click` navigation keeps adding to it. It is only meaningful on a `--preview` run; on dev every module is a separate `/src/...` request.
+- Code-split check (prod-only): on a `--preview` run, `open /ai/prompt-engineering`, `assets --expect '/CanvasScene/' --absent`, then `click link "Digital Brain"`, `expect-text "I built a brain my agent can read."`, `assets --expect '/\/assets\/CanvasScene-[^/]+\.js$/' --save db-code-split`. The CanvasScene chunk is not fetched until the canvas mounts.
 
 - Selectors are ARIA role + accessible name. The markup has few aria-labels or data attributes, so the name is the visible text (emoji included: `button "🧠 CoT"`).
 - `click` fails if the name matches 0 or 2+ elements. Use an anchored regex to disambiguate. Never fall back to coordinates or nth-child.
